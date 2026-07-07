@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Azul Cargo Express - Nova Minuta</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -24,8 +26,11 @@
         </button>
     </header>
 
+    <div id="status-planilha" class="bg-blue-50 text-[#002d72] text-[11px] text-center py-1.5 font-semibold border-b border-blue-100">
+        ⏳ Conectando ao GitHub para carregar as bases...
+    </div>
+
     <main id="conteudo-formulario" class="block flex-1 px-4 py-5">
-        
         <h1 class="text-[#002d72] font-bold text-center text-lg mb-1">Nova Minuta de Despacho</h1>
         <p class="text-gray-400 text-xs text-center mb-5">Escaneie a nota fiscal ou informe a chave de acesso</p>
 
@@ -56,55 +61,55 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" id="rem-documento" placeholder="Apenas números" oninput="verificarDocumento('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-documento" placeholder="Apenas números" oninput="verificarDocumento('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Insc. Est.</label>
-                            <input type="text" id="rem-ie" placeholder="Isento ou Número" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-ie" placeholder="Isento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" id="rem-nome" placeholder="Razão social ou Nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                        <input type="text" id="rem-nome" placeholder="Razão social" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CEP</label>
-                            <input type="text" id="rem-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Rua</label>
-                            <input type="text" id="rem-rua" placeholder="Logradouro, Avenida, etc" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-rua" placeholder="Logradouro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nº</label>
-                            <input type="text" id="rem-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Complemento</label>
-                            <input type="text" id="rem-complemento" placeholder="Apt, Bloco, Galpão" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-complemento" placeholder="Apt, Bloco" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bairro</label>
-                            <input type="text" id="rem-bairro" placeholder="Nome do Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-bairro" placeholder="Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estado</label>
-                            <input type="text" id="rem-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="rem-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                        <input type="text" id="rem-cidade" placeholder="Nome da Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                        <input type="text" id="rem-cidade" placeholder="Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                     </div>
                 </div>
 
@@ -120,63 +125,63 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" id="dest-documento" placeholder="Apenas números" oninput="verificarDocumento('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-documento" placeholder="Apenas números" oninput="verificarDocumento('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Insc. Est.</label>
-                            <input type="text" id="dest-ie" placeholder="Isento ou Número" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-ie" placeholder="Isento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" id="dest-nome" placeholder="Razão social ou Nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                        <input type="text" id="dest-nome" placeholder="Nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CEP</label>
-                            <input type="text" id="dest-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Rua</label>
-                            <input type="text" id="dest-rua" placeholder="Logradouro, Avenida, etc" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-rua" placeholder="Logradouro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nº</label>
-                            <input type="text" id="dest-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Complemento</label>
-                            <input type="text" id="dest-complemento" placeholder="Apt, Bloco, Galpão" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-complemento" placeholder="Apt, Bloco" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bairro</label>
-                            <input type="text" id="dest-bairro" placeholder="Nome do Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-bairro" placeholder="Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estado</label>
-                            <input type="text" id="dest-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                            <input type="text" id="dest-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                        <input type="text" id="dest-cidade" placeholder="Nome da Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#002d72]">
+                        <input type="text" id="dest-cidade" placeholder="Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
                     </div>
                 </div>
 
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-remetente')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide active:bg-gray-300 transition">
+                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-remetente')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
                         Voltar
                     </button>
-                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-tipo-entrega')" class="w-2/3 bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm active:bg-blue-900 transition">
+                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-tipo-entrega')" class="w-2/3 bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm">
                         Próximo
                     </button>
                 </div>
@@ -187,7 +192,7 @@
                 <p class="text-gray-400 text-[11px] mb-5">Selecione o método de recebimento</p>
 
                 <div class="space-y-3 mb-6">
-                    <button type="button" id="btn-entrega-domicilio" onclick="selecionarTipoEntrega('domicilio', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left group transition">
+                    <button type="button" id="btn-entrega-domicilio" onclick="selecionarTipoEntrega('domicilio', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-entrega">Entrega em Domicílio</div>
                             <div class="text-[10px] text-gray-400">Levar até o endereço do destinatário</div>
@@ -195,39 +200,33 @@
                         <span class="text-gray-300 text-lg icone-check-entrega">➔</span>
                     </button>
 
-                    <button type="button" id="btn-entrega-aeroporto" onclick="selecionarTipoEntrega('aeroporto', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left group transition">
+                    <button type="button" id="btn-entrega-aeroporto" onclick="selecionarTipoEntrega('aeroporto', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-entrega">Retira no Aeroporto / Loja</div>
-                            <div class="text-[10px] text-gray-400">Retirada em um balcão da Azul Cargo</div>
+                            <div class="text-[10px] text-gray-400">Retirada em uma unidade Azul Cargo</div>
                         </div>
                         <span class="text-gray-300 text-lg icone-check-entrega">➔</span>
                     </button>
 
                     <div id="quadro-aeroportos" class="hidden space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
-                        
-                        <div id="status-carregamento-github" class="text-[11px] text-amber-600 font-medium hidden">
-                            🔄 Sincronizando filiais com o GitHub...
-                        </div>
-
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">1. Escolha o Estado (UF):</label>
-                            <select id="select-entrega-estado" onchange="atualizarCidadesPorEstado()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white focus:outline-none focus:border-[#002d72]">
-                                <option value="">Aguardando dados...</option>
+                            <select id="select-entrega-estado" onchange="filtrarCidadesPorEstado()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none">
+                                <option value="">Carregando estados...</option>
                             </select>
                         </div>
 
                         <div id="container-entrega-cidade" class="hidden">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">2. Selecione a Loja / Aeroporto:</label>
-                            <select id="select-entrega-cidade" onchange="escolherBasePlanilhas()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white focus:outline-none focus:border-[#002d72]">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">2. Selecione a Loja / Unidade Atendida:</label>
+                            <select id="select-entrega-cidade" onchange="selecionarUnidadeFinal()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none">
                                 <option value="">Selecione...</option>
                             </select>
                         </div>
-
                     </div>
                 </div>
 
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-tipo-entrega', 'etapa-destinatario')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide active:bg-gray-300 transition">
+                    <button type="button" onclick="mudarEtapa('etapa-tipo-entrega', 'etapa-destinatario')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
                         Voltar
                     </button>
                     <button type="button" id="btn-proximo-entrega" disabled onclick="validarEAvancarEntrega()" class="w-2/3 bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm opacity-50 cursor-not-allowed transition">
@@ -241,7 +240,7 @@
                 <p class="text-gray-400 text-[11px] mb-5">Quem irá pagar o frete do despacho?</p>
                 
                 <div class="space-y-3 mb-6">
-                    <button type="button" id="btn-tomador-remetente" onclick="selecionarTomadorRapido('Remetente', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left group transition">
+                    <button type="button" id="btn-tomador-remetente" onclick="selecionarTomadorRapido('Remetente', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-tomador">Remetente</div>
                             <div class="text-[10px] text-gray-400">Pagar na Origem</div>
@@ -249,7 +248,7 @@
                         <span class="text-gray-300 text-lg icone-check">➔</span>
                     </button>
 
-                    <button type="button" id="btn-tomador-destinatario" onclick="selecionarTomadorRapido('Destinatário', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left group transition">
+                    <button type="button" id="btn-tomador-destinatario" onclick="selecionarTomadorRapido('Destinatário', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-tomador">Destinatário</div>
                             <div class="text-[10px] text-gray-400">Pagar no Destino (A Cobrar)</div>
@@ -257,22 +256,22 @@
                         <span class="text-gray-300 text-lg icone-check">➔</span>
                     </button>
 
-                    <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tomador-manual')" class="w-full border-2 border-gray-200 hover:border-[#009ee3] rounded-xl p-4 flex justify-between items-center text-left group transition">
+                    <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tomador-manual')" class="w-full border-2 border-gray-200 hover:border-[#009ee3] rounded-xl p-4 flex justify-between items-center text-left transition">
                         <div>
-                            <div class="font-bold text-sm text-gray-800 group-hover:text-[#009ee3]">Outro</div>
+                            <div class="font-bold text-sm text-gray-800">Outro</div>
                             <div class="text-[10px] text-gray-400">Preencher os dados de outro pagador manualmente</div>
                         </div>
-                        <span class="text-gray-300 group-hover:text-[#009ee3] text-lg">➔</span>
+                        <span class="text-gray-300 text-lg">➔</span>
                     </button>
                 </div>
 
                 <div id="container-finalizar-rapido" class="hidden mb-4">
-                    <button type="button" onclick="gerarTelaSucesso()" class="w-full bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide shadow-sm active:bg-blue-600 transition">
+                    <button type="button" onclick="gerarTelaSucesso()" class="w-full bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide">
                         Finalizar Minuta
                     </button>
                 </div>
 
-                <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide active:bg-gray-300 transition">
+                <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
                     Voltar
                 </button>
             </div>
@@ -284,19 +283,17 @@
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
                         <input type="text" placeholder="Digite o nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" placeholder="00.000.000/0001-00" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
+                        <input type="text" placeholder="Apenas números" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none">
                     </div>
                 </div>
 
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-tomador-manual', 'etapa-tomador-escolha')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide active:bg-gray-300 transition">
+                    <button type="button" onclick="mudarEtapa('etapa-tomador-manual', 'etapa-tomador-escolha')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
                         Voltar
                     </button>
-                    <button type="button" onclick="gerarTelaSucesso()" class="w-2/3 bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide shadow-sm active:bg-blue-600 transition">
+                    <button type="button" onclick="gerarTelaSucesso()" class="w-2/3 bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide shadow-sm">
                         Finalizar Minuta
                     </button>
                 </div>
@@ -307,7 +304,6 @@
 
     <div id="tela-sucesso" class="hidden flex-1 px-4 py-8 bg-gray-50/50">
         <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center shadow-sm">
-            
             <div class="flex items-center space-x-2.5 mb-6">
                 <div class="bg-[#2e8540] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-xs">✓</div>
                 <span class="text-[#2e8540] font-semibold text-base tracking-tight">Minuta enviada com sucesso!</span>
@@ -315,96 +311,73 @@
 
             <div class="w-full bg-white border border-gray-100 rounded-lg p-5 text-center shadow-xs mb-2">
                 <div class="text-gray-500 text-xs font-medium mb-1">Número da Minuta</div>
-                <div id="codigo-minuta-gerado" class="text-[#002d72] font-black text-xl tracking-wide mb-1">AZC-20260707-00158</div>
+                <div id="codigo-minuta-gerado" class="text-[#002d72] font-black text-xl tracking-wide mb-1">AZC-XXXXXXXXX</div>
                 <div class="text-gray-400 text-[11px]">Guarde este número para consultar sua minuta.</div>
             </div>
 
             <div class="w-full grid grid-cols-2 gap-3 mt-4">
-                <button onclick="reiniciarFluxo()" class="w-full bg-white border border-[#002d72] text-[#002d72] font-bold py-3 rounded-lg text-xs transition active:bg-gray-50 shadow-xs text-center">
+                <button onclick="reiniciarFluxo()" class="w-full bg-white border border-[#002d72] text-[#002d72] font-bold py-3 rounded-lg text-xs text-center">
                     Nova Minuta
                 </button>
-                <button onclick="alert('Redirecionando para consulta...')" class="w-full bg-[#002d72] text-white font-bold py-3 rounded-lg text-xs transition active:bg-blue-900 shadow-xs text-center">
+                <button onclick="alert('Consultando...')" class="w-full bg-[#002d72] text-white font-bold py-3 rounded-lg text-xs text-center">
                     Consultar Minuta
                 </button>
             </div>
-
         </div>
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO SEU GITHUB - SUBSTITUA APENAS ESTE LINK ABAIXO:
+        const urlGitHub = "https://github.com/cristianop1987/minuta/blob/main/CADASTRO%20BASES%20AZUL%20CARGO%202025%20_%20EXPANS%C3%83O.xlsx";
+
+        window.dadosPlanilhaGlobal = [];
         let tomadorSelecionado = "";
         let modalidadeEntrega = "";
-        let aeroportoSelecionado = "";
-        
-        // Memória para guardar as filiais mapeadas após baixar do GitHub
-        let dadosBasesPlanilha = {};
+        let unidadeSelecionada = "";
 
-        // ATENÇÃO: COLOQUE AQUI A SUA URL "RAW" DO GITHUB DO SEU ARQUIVO NACIONAL.CSV
-        const URL_GITHUB_CSV = "https://github.com/cristianop1987/minuta/blob/main/CADASTRO%20BASES%20AZUL%20CARGO%202025%20_%20EXPANS%C3%83O.xlsx";
-
-        // Baixa e processa a planilha inteira do GitHub dinamicamente
-        async function carregarDadosDoGithub() {
-            const statusLabel = document.getElementById('status-carregamento-github');
-            const selectEstado = document.getElementById('select-entrega-estado');
-            
-            statusLabel.classList.remove('hidden');
-            selectEstado.innerHTML = '<option value="">Carregando...</option>';
-
+        // Função que baixa o arquivo Excel do GitHub assim que a página carrega
+        async function carregarDadosDoGitHub() {
+            const statusDiv = document.getElementById('status-planilha');
             try {
-                const response = await fetch(URL_GITHUB_CSV);
-                if (!response.ok) throw new Error("Erro na requisição");
+                const response = await fetch(urlGitHub);
+                if (!response.ok) throw new Error("Erro de rede");
+                const buffer = await response.arrayBuffer();
+                const data = new Uint8Array(buffer);
+                const workbook = XLSX.read(data, { type: 'array' });
                 
-                const csvTexto = await response.text();
+                // Pega a primeira aba (Aba Nacional)
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Quebra as linhas do CSV
-                const linhas = csvTexto.split(/\r?\n/);
-                const mapaTemporario = {};
-
-                linhas.forEach(linha => {
-                    // Divide por vírgulas respeitando aspas se houverem
-                    const colunas = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    if (colunas.length > 6) {
-                        const siglaSk = colunas[0]?.trim();     // Coluna A (SIGLA SK)
-                        const estadoUf = colunas[5]?.trim();    // Coluna F (UF)
-                        const cidade = colunas[6]?.trim();      // Coluna G (CIDADE)
-
-                        // Pula linhas de cabeçalho ou vazias
-                        if (!siglaSk || !estadoUf || !cidade || siglaSk === "SIGLA SK" || estadoUf === "UF") {
-                            return;
-                        }
-
-                        // Cria o Estado no mapa caso não exista
-                        if (!mapaTemporario[estadoUf]) {
-                            mapaTemporario[estadoUf] = [];
-                        }
-
-                        // Adiciona a cidade ligada à sigla SK
-                        mapaTemporario[estadoUf].push({
-                            cidade: cidade.toUpperCase(),
-                            sk: siglaSk.toUpperCase()
-                        });
-                    }
-                });
-
-                dadosBasesPlanilha = mapaTemporario;
-                inicializarEstados();
-                statusLabel.classList.add('hidden');
-
+                // Range 5 ignora os cabeçalhos iniciais vazios, começando na linha 6 oficial (onde estão as colunas SIGLA SK, etc)
+                const jsonRaw = XLSX.utils.sheet_to_json(worksheet, { range: 5 });
+                
+                // Mapeia removendo linhas sem dados importantes
+                window.dadosPlanilhaGlobal = jsonRaw.filter(row => row['SIGLA SK'] || row['CIDADE']);
+                
+                statusDiv.innerHTML = `✅ ${window.dadosPlanilhaGlobal.length} bases (Lojas & TECA) sincronizadas do GitHub!`;
+                statusDiv.className = "bg-green-50 text-green-700 text-[11px] text-center py-1.5 font-semibold border-b border-green-100";
+                
+                popularEstados();
             } catch (error) {
                 console.error(error);
-                statusLabel.innerText = "❌ Falha ao conectar ao banco do GitHub.";
-                statusLabel.className = "text-[11px] text-red-600 font-bold";
-                selectEstado.innerHTML = '<option value="">Erro ao carregar</option>';
+                statusDiv.innerHTML = "⚠️ Não foi possível carregar o Excel do GitHub. Verifique a URL.";
+                statusDiv.className = "bg-red-50 text-red-700 text-[11px] text-center py-1.5 font-semibold border-b border-red-100";
             }
         }
 
-        // Popula o select com todos os estados encontrados na planilha
-        function inicializarEstados() {
+        // Popula o select de Estados em ordem alfabética baseado na coluna UF
+        function popularEstados() {
             const selectEstado = document.getElementById('select-entrega-estado');
             selectEstado.innerHTML = '<option value="">Selecione...</option>';
             
-            Object.keys(dadosBasesPlanilha).sort().forEach(uf => {
+            // Extrai as UFs únicas tirando linhas inválidas
+            const ufsunicas = [...new Set(window.dadosPlanilhaGlobal
+                .map(item => item['UF'] ? item['UF'].toString().toUpperCase().trim() : '')
+                .filter(uf => uf && uf.length === 2)
+            )].sort();
+
+            ufsunicas.forEach(uf => {
                 const option = document.createElement('option');
                 option.value = uf;
                 option.textContent = uf;
@@ -412,9 +385,9 @@
             });
         }
 
-        // Filtra e exibe as cidades do respectivo estado no padrão: ARAXA - AAX
-        function atualizarCidadesPorEstado() {
-            const ufSelecionada = document.getElementById('select-entrega-estado').value;
+        // Filtra as localidades daquele estado mantendo TUDO (Lojas, Agências e TECA)
+        function filtrarCidadesPorEstado() {
+            const uf = document.getElementById('select-entrega-estado').value;
             const containerCidade = document.getElementById('container-entrega-cidade');
             const selectCidade = document.getElementById('select-entrega-cidade');
             const btnProximo = document.getElementById('btn-proximo-entrega');
@@ -422,33 +395,47 @@
             selectCidade.innerHTML = '<option value="">Selecione...</option>';
             btnProximo.disabled = true;
             btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
-            aeroportoSelecionado = "";
+            unidadeSelecionada = "";
 
-            if (!ufSelecionada || !dadosBasesPlanilha[ufSelecionada]) {
+            if (!uf) {
                 containerCidade.classList.add('hidden');
                 return;
             }
 
             containerCidade.classList.remove('hidden');
 
-            // Ordena as filiais por ordem alfabética da cidade
-            const filiaisOrdenadas = dadosBasesPlanilha[ufSelecionada].sort((a, b) => a.cidade.localeCompare(b.cidade));
+            // Filtra as linhas daquele estado específico
+            const filtrados = window.dadosPlanilhaGlobal.filter(item => {
+                const itemUf = item['UF'] ? item['UF'].toString().toUpperCase().trim() : '';
+                return itemUf === uf;
+            });
 
-            filiaisOrdenadas.forEach(base => {
-                const textoFormatado = `${base.cidade} - ${base.sk}`;
+            // Ordena as localidades em ordem alfabética pelo nome da cidade
+            filtrados.sort((a, b) => {
+                const cidA = a['CIDADE'] ? a['CIDADE'].toString() : '';
+                const cidB = b['CIDADE'] ? b['CIDADE'].toString() : '';
+                return cidA.localeCompare(cidB);
+            });
+
+            // Adiciona no menu drop-down mantendo o formato clássico "Cidade - Sigla"
+            filtrados.forEach(item => {
+                const cidade = item['CIDADE'] ? item['CIDADE'].toString().trim() : 'S/C';
+                const sigla = item['SIGLA SK'] ? item['SIGLA SK'].toString().trim() : 'S/S';
+                const modelo = item['MODELO DE NEGOCIO'] ? ` (${item['MODELO DE NEGOCIO'].toString().trim()})` : '';
+                
                 const option = document.createElement('option');
-                option.value = textoFormatado;
-                option.textContent = textoFormatado;
+                option.value = `${cidade} - ${sigla}`;
+                option.textContent = `${cidade} - ${sigla}${modelo}`;
                 selectCidade.appendChild(option);
             });
         }
 
-        function escolherBasePlanilhas() {
-            const baseSelecionada = document.getElementById('select-entrega-cidade').value;
+        function selecionarUnidadeFinal() {
+            const val = document.getElementById('select-entrega-cidade').value;
             const btnProximo = document.getElementById('btn-proximo-entrega');
 
-            if (baseSelecionada) {
-                aeroportoSelecionado = baseSelecionada;
+            if (val) {
+                unidadeSelecionada = val;
                 btnProximo.disabled = false;
                 btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
@@ -457,10 +444,10 @@
             }
         }
 
-        // Dispara o download inteligente assim que abrir a página
-        carregarDadosDoGithub();
+        // Executa o download da planilha assim que abrir o app
+        document.addEventListener('DOMContentLoaded', carregarDadosDoGitHub);
 
-        // EXTRAÇÃO REAL VIA INTERNET (CNPJ via BrasilAPI)
+        // Chamadas de APIs públicas normais para CNPJ e CEP
         async function verificarDocumento(prefixo) {
             const docInput = document.getElementById(`${prefixo}-documento`).value.replace(/\D/g, '');
             if (docInput.length === 14) {
@@ -468,7 +455,6 @@
                     const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${docInput}`);
                     if (!response.ok) throw new Error();
                     const data = await response.json();
-                    
                     document.getElementById(`${prefixo}-nome`).value = data.razao_social || data.nome_fantasia || '';
                     document.getElementById(`${prefixo}-cep`).value = data.cep || '';
                     document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
@@ -478,15 +464,11 @@
                     document.getElementById(`${prefixo}-estado`).value = data.uf || '';
                     document.getElementById(`${prefixo}-cidade`).value = data.municipio || '';
                 } catch (error) {
-                    alert('Erro ao buscar CNPJ na internet ou documento não encontrado.');
+                    alert('Erro ao buscar CNPJ.');
                 }
-            } else if (docInput.length === 11) {
-                limparCamposEndereco(prefixo);
-                document.getElementById(`${prefixo}-nome`).value = "";
             }
         }
 
-        // EXTRAÇÃO REAL VIA INTERNET (ViaCEP)
         async function buscarEnderecoPorCep(prefixo) {
             const cepInput = document.getElementById(`${prefixo}-cep`).value.replace(/\D/g, '');
             if (cepInput.length === 8) {
@@ -494,30 +476,17 @@
                     const response = await fetch(`https://viacep.com.br/ws/${cepInput}/json/`);
                     if (!response.ok) throw new Error();
                     const data = await response.json();
-                    if (data.erro) {
-                        alert('CEP não encontrado na base de dados.');
-                        return;
+                    if (!data.erro) {
+                        document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
+                        document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
+                        document.getElementById(`${prefixo}-estado`).value = data.uf || '';
+                        document.getElementById(`${prefixo}-cidade`).value = data.localidade || '';
                     }
-                    document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
-                    document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
-                    document.getElementById(`${prefixo}-estado`).value = data.uf || '';
-                    document.getElementById(`${prefixo}-cidade`).value = data.localidade || '';
-                } catch (error) {
-                    alert('Erro ao se conectar com o serviço de busca de CEP.');
-                }
+                } catch (error) {}
             }
         }
 
-        function limparCamposEndereco(prefixo) {
-            document.getElementById(`${prefixo}-cep`).value = "";
-            document.getElementById(`${prefixo}-rua`).value = "";
-            document.getElementById(`${prefixo}-numero`).value = "";
-            document.getElementById(`${prefixo}-complemento`).value = "";
-            document.getElementById(`${prefixo}-bairro`).value = "";
-            document.getElementById(`${prefixo}-estado`).value = "";
-            document.getElementById(`${prefixo}-cidade`).value = "";
-        }
-
+        // Fluxos normais de navegação do App
         function mudarEtapa(idAtual, idProxima) {
             document.getElementById(idAtual).classList.replace('block', 'hidden');
             document.getElementById(idProxima).classList.replace('hidden', 'block');
@@ -526,7 +495,7 @@
 
         function selecionarTipoEntrega(tipo, elemento) {
             modalidadeEntrega = tipo;
-            aeroportoSelecionado = ""; 
+            unidadeSelecionada = "";
             
             ['btn-entrega-domicilio', 'btn-entrega-aeroporto'].forEach(id => {
                 const btn = document.getElementById(id);
@@ -546,8 +515,6 @@
 
             if (tipo === 'aeroporto') {
                 quadro.classList.remove('hidden');
-                document.getElementById('select-entrega-estado').value = "";
-                document.getElementById('container-entrega-cidade').className = "hidden";
                 btnProximo.disabled = true;
                 btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
@@ -582,18 +549,13 @@
         function gerarTelaSucesso() {
             const randomMinuta = Math.floor(10000 + Math.random() * 90000);
             document.getElementById('codigo-minuta-gerado').innerText = `AZC-20260707-${randomMinuta}`;
-
-            document.getElementById('conteudo-formulario').classList.replace('block', 'hidden');
-            document.getElementById('tela-sucesso').classList.replace('hidden', 'block');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            mudarEtapa('conteudo-formulario', 'tela-sucesso');
         }
 
         function reiniciarFluxo() {
             document.getElementById('tela-sucesso').classList.replace('block', 'hidden');
             document.getElementById('conteudo-formulario').classList.replace('hidden', 'block');
-            
             document.querySelectorAll('input').forEach(input => input.value = "");
-            
             document.getElementById('etapa-remetente').classList.replace('hidden', 'block');
             document.getElementById('etapa-destinatario').classList.replace('block', 'hidden');
             document.getElementById('etapa-tipo-entrega').classList.replace('block', 'hidden');
@@ -602,6 +564,5 @@
             document.getElementById('container-finalizar-rapido').classList.add('hidden');
         }
     </script>
-
 </body>
 </html>
