@@ -203,15 +203,26 @@
                         <span class="text-gray-300 text-lg icone-check-entrega">➔</span>
                     </button>
 
-                    <div id="quadro-aeroportos" class="hidden border border-gray-300 rounded px-2 py-1 bg-gray-50">
-                        <label class="block text-[9px] font-bold text-gray-400 uppercase my-1">Selecione o Aeroporto de Retirada:</label>
-                        <div class="h-32 overflow-y-auto divide-y divide-gray-200 text-xs text-gray-700 bg-white border border-gray-200 rounded">
-                            <div onclick="chooseAirport('FOR - Aeroporto de Fortaleza', this)" class="p-2.5 hover:bg-blue-50 cursor-pointer item-aeroporto">FOR - Aeroporto de Fortaleza (CE)</div>
-                            <div onclick="chooseAirport('REC - Aeroporto de Recife', this)" class="p-2.5 hover:bg-blue-50 cursor-pointer item-aeroporto">REC - Aeroporto de Recife (PE)</div>
-                            <div onclick="chooseAirport('GRU - Aeroporto de Guarulhos', this)" class="p-2.5 hover:bg-blue-50 cursor-pointer item-aeroporto">GRU - Aeroporto de Guarulhos (SP)</div>
-                            <div onclick="chooseAirport('VCP - Aeroporto de Viracopos', this)" class="p-2.5 hover:bg-blue-50 cursor-pointer item-aeroporto">VCP - Aeroporto de Viracopos (SP)</div>
-                            <div onclick="chooseAirport('CNF - Aeroporto de Confins', this)" class="p-2.5 hover:bg-blue-50 cursor-pointer item-aeroporto">CNF - Aeroporto de Confins (MG)</div>
+                    <div id="quadro-aeroportos" class="hidden space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
+                        
+                        <div id="status-carregamento-github" class="text-[11px] text-amber-600 font-medium hidden">
+                            🔄 Sincronizando filiais com o GitHub...
                         </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">1. Escolha o Estado (UF):</label>
+                            <select id="select-entrega-estado" onchange="atualizarCidadesPorEstado()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white focus:outline-none focus:border-[#002d72]">
+                                <option value="">Aguardando dados...</option>
+                            </select>
+                        </div>
+
+                        <div id="container-entrega-cidade" class="hidden">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">2. Selecione a Loja / Aeroporto:</label>
+                            <select id="select-entrega-cidade" onchange="escolherBasePlanilhas()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white focus:outline-none focus:border-[#002d72]">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 
@@ -324,17 +335,138 @@
         let tomadorSelecionado = "";
         let modalidadeEntrega = "";
         let aeroportoSelecionado = "";
+        
+        // Memória para guardar as filiais mapeadas após baixar do GitHub
+        let dadosBasesPlanilha = {};
+
+        // ATENÇÃO: COLOQUE AQUI A SUA URL "RAW" DO GITHUB DO SEU ARQUIVO NACIONAL.CSV
+        const URL_GITHUB_CSV = "https://github.com/cristianop1987/minuta/blob/main/CADASTRO%20BASES%20AZUL%20CARGO%202025%20_%20EXPANS%C3%83O.xlsx";
+
+        // Baixa e processa a planilha inteira do GitHub dinamicamente
+        async function carregarDadosDoGithub() {
+            const statusLabel = document.getElementById('status-carregamento-github');
+            const selectEstado = document.getElementById('select-entrega-estado');
+            
+            statusLabel.classList.remove('hidden');
+            selectEstado.innerHTML = '<option value="">Carregando...</option>';
+
+            try {
+                const response = await fetch(URL_GITHUB_CSV);
+                if (!response.ok) throw new Error("Erro na requisição");
+                
+                const csvTexto = await response.text();
+                
+                // Quebra as linhas do CSV
+                const linhas = csvTexto.split(/\r?\n/);
+                const mapaTemporario = {};
+
+                linhas.forEach(linha => {
+                    // Divide por vírgulas respeitando aspas se houverem
+                    const colunas = linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    
+                    if (colunas.length > 6) {
+                        const siglaSk = colunas[0]?.trim();     // Coluna A (SIGLA SK)
+                        const estadoUf = colunas[5]?.trim();    // Coluna F (UF)
+                        const cidade = colunas[6]?.trim();      // Coluna G (CIDADE)
+
+                        // Pula linhas de cabeçalho ou vazias
+                        if (!siglaSk || !estadoUf || !cidade || siglaSk === "SIGLA SK" || estadoUf === "UF") {
+                            return;
+                        }
+
+                        // Cria o Estado no mapa caso não exista
+                        if (!mapaTemporario[estadoUf]) {
+                            mapaTemporario[estadoUf] = [];
+                        }
+
+                        // Adiciona a cidade ligada à sigla SK
+                        mapaTemporario[estadoUf].push({
+                            cidade: cidade.toUpperCase(),
+                            sk: siglaSk.toUpperCase()
+                        });
+                    }
+                });
+
+                dadosBasesPlanilha = mapaTemporario;
+                inicializarEstados();
+                statusLabel.classList.add('hidden');
+
+            } catch (error) {
+                console.error(error);
+                statusLabel.innerText = "❌ Falha ao conectar ao banco do GitHub.";
+                statusLabel.className = "text-[11px] text-red-600 font-bold";
+                selectEstado.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+
+        // Popula o select com todos os estados encontrados na planilha
+        function inicializarEstados() {
+            const selectEstado = document.getElementById('select-entrega-estado');
+            selectEstado.innerHTML = '<option value="">Selecione...</option>';
+            
+            Object.keys(dadosBasesPlanilha).sort().forEach(uf => {
+                const option = document.createElement('option');
+                option.value = uf;
+                option.textContent = uf;
+                selectEstado.appendChild(option);
+            });
+        }
+
+        // Filtra e exibe as cidades do respectivo estado no padrão: ARAXA - AAX
+        function atualizarCidadesPorEstado() {
+            const ufSelecionada = document.getElementById('select-entrega-estado').value;
+            const containerCidade = document.getElementById('container-entrega-cidade');
+            const selectCidade = document.getElementById('select-entrega-cidade');
+            const btnProximo = document.getElementById('btn-proximo-entrega');
+
+            selectCidade.innerHTML = '<option value="">Selecione...</option>';
+            btnProximo.disabled = true;
+            btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
+            aeroportoSelecionado = "";
+
+            if (!ufSelecionada || !dadosBasesPlanilha[ufSelecionada]) {
+                containerCidade.classList.add('hidden');
+                return;
+            }
+
+            containerCidade.classList.remove('hidden');
+
+            // Ordena as filiais por ordem alfabética da cidade
+            const filiaisOrdenadas = dadosBasesPlanilha[ufSelecionada].sort((a, b) => a.cidade.localeCompare(b.cidade));
+
+            filiaisOrdenadas.forEach(base => {
+                const textoFormatado = `${base.cidade} - ${base.sk}`;
+                const option = document.createElement('option');
+                option.value = textoFormatado;
+                option.textContent = textoFormatado;
+                selectCidade.appendChild(option);
+            });
+        }
+
+        function escolherBasePlanilhas() {
+            const baseSelecionada = document.getElementById('select-entrega-cidade').value;
+            const btnProximo = document.getElementById('btn-proximo-entrega');
+
+            if (baseSelecionada) {
+                aeroportoSelecionado = baseSelecionada;
+                btnProximo.disabled = false;
+                btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnProximo.disabled = true;
+                btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Dispara o download inteligente assim que abrir a página
+        carregarDadosDoGithub();
 
         // EXTRAÇÃO REAL VIA INTERNET (CNPJ via BrasilAPI)
         async function verificarDocumento(prefixo) {
             const docInput = document.getElementById(`${prefixo}-documento`).value.replace(/\D/g, '');
-            
-            // Dispara automaticamente quando chega em 14 dígitos (CNPJ)
             if (docInput.length === 14) {
                 try {
                     const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${docInput}`);
                     if (!response.ok) throw new Error();
-                    
                     const data = await response.json();
                     
                     document.getElementById(`${prefixo}-nome`).value = data.razao_social || data.nome_fantasia || '';
@@ -348,30 +480,24 @@
                 } catch (error) {
                     alert('Erro ao buscar CNPJ na internet ou documento não encontrado.');
                 }
-            } 
-            // Dispara automaticamente quando chega em 11 dígitos (CPF)
-            else if (docInput.length === 11) {
+            } else if (docInput.length === 11) {
                 limparCamposEndereco(prefixo);
                 document.getElementById(`${prefixo}-nome`).value = "";
             }
         }
 
-        // EXTRAÇÃO REAL VIA INTERNET (URL ViaCEP Corrigida)
+        // EXTRAÇÃO REAL VIA INTERNET (ViaCEP)
         async function buscarEnderecoPorCep(prefixo) {
             const cepInput = document.getElementById(`${prefixo}-cep`).value.replace(/\D/g, '');
-            
-            // Dispara automaticamente quando o usuário termina de digitar os 8 números do CEP
             if (cepInput.length === 8) {
                 try {
                     const response = await fetch(`https://viacep.com.br/ws/${cepInput}/json/`);
                     if (!response.ok) throw new Error();
-                    
                     const data = await response.json();
                     if (data.erro) {
-                        alert('CEP não encontrado na base de dados dos Correios.');
+                        alert('CEP não encontrado na base de dados.');
                         return;
                     }
-
                     document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
                     document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
                     document.getElementById(`${prefixo}-estado`).value = data.uf || '';
@@ -392,7 +518,6 @@
             document.getElementById(`${prefixo}-cidade`).value = "";
         }
 
-        // Fluxo de navegação do App
         function mudarEtapa(idAtual, idProxima) {
             document.getElementById(idAtual).classList.replace('block', 'hidden');
             document.getElementById(idProxima).classList.replace('hidden', 'block');
@@ -421,6 +546,8 @@
 
             if (tipo === 'aeroporto') {
                 quadro.classList.remove('hidden');
+                document.getElementById('select-entrega-estado').value = "";
+                document.getElementById('container-entrega-cidade').className = "hidden";
                 btnProximo.disabled = true;
                 btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
@@ -428,18 +555,6 @@
                 btnProximo.disabled = false;
                 btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        }
-
-        function chooseAirport(nomeAeroporto, elemento) {
-            aeroportoSelecionado = nomeAeroporto;
-            document.querySelectorAll('.item-aeroporto').forEach(item => {
-                item.classList.remove('bg-blue-100', 'text-[#002d72]', 'font-bold');
-            });
-            elemento.classList.add('bg-blue-100', 'text-[#002d72]', 'font-bold');
-
-            const btnProximo = document.getElementById('btn-proximo-entrega');
-            btnProximo.disabled = false;
-            btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         function validarEAvancarEntrega() {
