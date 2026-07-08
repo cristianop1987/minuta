@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azul Cargo Express - Nova Minuta</title>
+    <title>Azul Cargo Express - Preenchimento de Minuta</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Biblioteca para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Biblioteca PDF-LIB para manipular o PDF original diretamente -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,9 +25,7 @@
             <span class="text-[#002d72] font-black italic text-xl leading-none">Azulcargo</span>
             <span class="text-[#009ee3] font-bold italic text-xs tracking-wider uppercase leading-none pl-5 mt-0.5">Express</span>
         </div>
-        <button class="text-gray-600 text-2xl focus:outline-none">
-            &#9776;
-        </button>
+        <button class="text-gray-600 text-2xl focus:outline-none">&#9776;</button>
     </header>
 
     <div id="status-planilha" class="bg-blue-50 text-[#002d72] text-[11px] text-center py-1.5 font-semibold border-b border-blue-100">
@@ -34,9 +36,8 @@
         <h1 class="text-[#002d72] font-bold text-center text-lg mb-1">Nova Minuta de Despacho</h1>
         <p class="text-gray-400 text-xs text-center mb-5">Escaneie a nota fiscal ou informe a chave de acesso</p>
 
-        <button class="w-full bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs flex items-center justify-center space-x-2 shadow-sm active:bg-blue-900 transition mb-4">
-            <span class="text-sm">[ ||| ]</span>
-            <span>Ler código de barras</span>
+        <button class="w-full bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs flex items-center justify-center space-x-2 mb-4">
+            <span>[ ||| ]</span> <span>Ler código de barras</span>
         </button>
 
         <div class="flex items-center justify-center space-x-3 my-3">
@@ -45,524 +46,522 @@
             <div class="h-[1px] bg-gray-200 w-full"></div>
         </div>
 
-        <input type="text" placeholder="Chave de acesso da NF-e" class="w-full border border-gray-300 rounded px-3 py-2.5 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-500 mb-3">
-
-        <button class="w-full bg-[#002d72] text-white font-semibold py-2.5 px-4 rounded text-xs tracking-wide shadow-sm active:bg-blue-900 transition mb-6">
-            Buscar Nota
-        </button>
+        <input type="text" placeholder="Chave de acesso da NF-e" class="w-full border border-gray-300 rounded px-3 py-2.5 text-xs text-gray-700 mb-3 focus:outline-none">
+        <button class="w-full bg-[#002d72] text-white font-semibold py-2.5 rounded text-xs mb-6">Buscar Nota</button>
 
         <div class="border-t-2 border-[#002d72] pt-4 mb-6">
             <h2 class="text-[#002d72] font-black text-xs tracking-wider uppercase mb-4">Dados da Nota Fiscal</h2>
             
+            <!-- ETAPA 1: REMETENTE -->
             <div id="etapa-remetente" class="block">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Remetente</h3>
-                
                 <div class="space-y-3 mb-6">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" id="rem-documento" placeholder="Apenas números" oninput="verificarDocumento('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-documento" oninput="verificarDocumento('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Insc. Est.</label>
-                            <input type="text" id="rem-ie" placeholder="Isento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-ie" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" id="rem-nome" placeholder="Razão social" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                        <input type="text" id="rem-nome" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                     </div>
-
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CEP</label>
-                            <input type="text" id="rem-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-cep" oninput="buscarEnderecoPorCep('rem')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Rua</label>
-                            <input type="text" id="rem-rua" placeholder="Logradouro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-rua" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nº</label>
-                            <input type="text" id="rem-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-numero" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Complemento</label>
-                            <input type="text" id="rem-complemento" placeholder="Apt, Bloco" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bairro</label>
-                            <input type="text" id="rem-bairro" placeholder="Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
+                            <input type="text" id="rem-cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estado</label>
-                            <input type="text" id="rem-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="rem-estado" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                        <input type="text" id="rem-cidade" placeholder="Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fone</label>
+                        <input type="text" id="rem-fone" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                     </div>
                 </div>
-
-                <button type="button" onclick="mudarEtapa('etapa-remetente', 'etapa-destinatario')" class="w-full bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm active:bg-blue-900 transition">
-                    Próximo
-                </button>
+                <button type="button" onclick="mudarEtapa('etapa-remetente', 'etapa-destinatario')" class="w-full bg-[#002d72] text-white font-semibold py-3 rounded text-xs">Próximo</button>
             </div>
 
+            <!-- ETAPA 2: DESTINATÁRIO -->
             <div id="etapa-destinatario" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Destinatário</h3>
-                
                 <div class="space-y-3 mb-6">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" id="dest-documento" placeholder="Apenas números" oninput="verificarDocumento('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-documento" oninput="verificarDocumento('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Insc. Est.</label>
-                            <input type="text" id="dest-ie" placeholder="Isento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-ie" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" id="dest-nome" placeholder="Nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                        <input type="text" id="dest-nome" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                     </div>
-
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CEP</label>
-                            <input type="text" id="dest-cep" placeholder="00000000" oninput="buscarEnderecoPorCep('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-cep" oninput="buscarEnderecoPorCep('dest')" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Rua</label>
-                            <input type="text" id="dest-rua" placeholder="Logradouro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-rua" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nº</label>
-                            <input type="text" id="dest-numero" placeholder="S/N" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-numero" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Complemento</label>
-                            <input type="text" id="dest-complemento" placeholder="Apt, Bloco" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-complemento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-2">
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bairro</label>
-                            <input type="text" id="dest-bairro" placeholder="Bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-bairro" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Estado</label>
-                            <input type="text" id="dest-estado" placeholder="UF" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                            <input type="text" id="dest-estado" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
-                        <input type="text" id="dest-cidade" placeholder="Cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 focus:outline-none">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cidade</label>
+                            <input type="text" id="dest-cidade" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fone</label>
+                            <input type="text" id="dest-fone" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
+                        </div>
                     </div>
                 </div>
-
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-remetente')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
-                        Voltar
-                    </button>
-                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-tipo-entrega')" class="w-2/3 bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm">
-                        Próximo
-                    </button>
+                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-remetente')" class="w-1/3 bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
+                    <button type="button" onclick="mudarEtapa('etapa-destinatario', 'etapa-tipo-entrega')" class="w-2/3 bg-[#002d72] text-white py-3 rounded text-xs">Próximo</button>
                 </div>
             </div>
 
+            <!-- ETAPA: TIPO DE ENTREGA -->
             <div id="etapa-tipo-entrega" class="hidden">
-                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-1">Tipo de Entrega</h3>
-                <p class="text-gray-400 text-[11px] mb-5">Selecione o método de recebimento</p>
-
+                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Tipo de Entrega</h3>
                 <div class="space-y-3 mb-6">
-                    <button type="button" id="btn-entrega-domicilio" onclick="selecionarTipoEntrega('domicilio', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
+                    <button type="button" id="btn-entrega-domicilio" onclick="selecionarTipoEntrega('domicilio', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-entrega">Entrega em Domicílio</div>
                             <div class="text-[10px] text-gray-400">Levar até o endereço do destinatário</div>
                         </div>
-                        <span class="text-gray-300 text-lg icone-check-entrega">➔</span>
+                        <span class="icone-check-entrega text-gray-400">➔</span>
                     </button>
-
-                    <button type="button" id="btn-entrega-aeroporto" onclick="selecionarTipoEntrega('aeroporto', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
+                    <button type="button" id="btn-entrega-aeroporto" onclick="selecionarTipoEntrega('aeroporto', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200">
                         <div>
                             <div class="font-bold text-sm text-gray-800 label-entrega">Retira no Aeroporto / Loja</div>
                             <div class="text-[10px] text-gray-400">Retirada em uma unidade Azul Cargo</div>
                         </div>
-                        <span class="text-gray-300 text-lg icone-check-entrega">➔</span>
+                        <span class="icone-check-entrega text-gray-400">➔</span>
                     </button>
 
                     <div id="quadro-aeroportos" class="hidden space-y-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
                         <div>
                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">1. Escolha o Estado (UF):</label>
-                            <select id="select-entrega-estado" onchange="filtrarCidadesPorEstado()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none">
-                                <option value="">Carregando estados...</option>
+                            <select id="select-entrega-estado" onchange="filtrarCidadesPorEstado()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none">
+                                <option value="">Carregando...</option>
                             </select>
                         </div>
-
                         <div id="container-entrega-cidade" class="hidden">
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">2. Selecione a Loja / Unidade Atendida:</label>
-                            <select id="select-entrega-cidade" onchange="selecionarUnidadeFinal()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">2. Selecione a Unidade:</label>
+                            <select id="select-entrega-cidade" onchange="selecionarUnidadeFinal()" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none">
                                 <option value="">Selecione...</option>
                             </select>
                         </div>
                     </div>
                 </div>
-
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-tipo-entrega', 'etapa-destinatario')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
-                        Voltar
-                    </button>
-                    <button type="button" id="btn-proximo-entrega" disabled onclick="validarEAvancarEntrega()" class="w-2/3 bg-[#002d72] text-white font-semibold py-3 px-4 rounded text-xs tracking-wide shadow-sm opacity-50 cursor-not-allowed transition">
-                        Próximo
-                    </button>
+                    <button type="button" onclick="mudarEtapa('etapa-tipo-entrega', 'etapa-destinatario')" class="w-1/3 bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
+                    <button type="button" id="btn-proximo-entrega" disabled onclick="mudarEtapa('etapa-tipo-entrega', 'etapa-tomador-escolha')" class="w-2/3 bg-[#002d72] text-white py-3 rounded text-xs opacity-50 cursor-not-allowed">Próximo</button>
                 </div>
             </div>
 
+            <!-- ETAPA 3: TOMADOR ESCOLHA -->
             <div id="etapa-tomador-escolha" class="hidden">
-                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-1">Tomador</h3>
-                <p class="text-gray-400 text-[11px] mb-5">Quem irá pagar o frete do despacho?</p>
-                
+                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Quem pagará o frete?</h3>
                 <div class="space-y-3 mb-6">
-                    <button type="button" id="btn-tomador-remetente" onclick="selecionarTomadorRapido('Remetente', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
-                        <div>
-                            <div class="font-bold text-sm text-gray-800 label-tomador">Remetente</div>
-                            <div class="text-[10px] text-gray-400">Pagar na Origem</div>
-                        </div>
-                        <span class="text-gray-300 text-lg icone-check">➔</span>
+                    <button type="button" id="btn-tomador-remetente" onclick="selecionarTomadorRapido('Remetente', this)" class="btn-tomador-opcao w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200">
+                        <div><div class="font-bold text-sm text-gray-800 label-tomador">Remetente</div></div><span class="icone-check text-gray-400">➔</span>
                     </button>
-
-                    <button type="button" id="btn-tomador-destinatario" onclick="selecionarTomadorRapido('Destinatário', this)" class="w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition">
-                        <div>
-                            <div class="font-bold text-sm text-gray-800 label-tomador">Destinatário</div>
-                            <div class="text-[10px] text-gray-400">Pagar no Destino (A Cobrar)</div>
-                        </div>
-                        <span class="text-gray-300 text-lg icone-check">➔</span>
+                    <button type="button" id="btn-tomador-destinatario" onclick="selecionarTomadorRapido('Destinatário', this)" class="btn-tomador-opcao w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200">
+                        <div><div class="font-bold text-sm text-gray-800 label-tomador">Destinatário</div></div><span class="icone-check text-gray-400">➔</span>
                     </button>
-
-                    <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tomador-manual')" class="w-full border-2 border-gray-200 hover:border-[#009ee3] rounded-xl p-4 flex justify-between items-center text-left transition">
-                        <div>
-                            <div class="font-bold text-sm text-gray-800">Outro</div>
-                            <div class="text-[10px] text-gray-400">Preencher os dados de outro pagador manualmente</div>
-                        </div>
-                        <span class="text-gray-300 text-lg">➔</span>
+                    <button type="button" id="btn-tomador-outro" onclick="marcarTomadorOutro(this)" class="btn-tomador-opcao w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200">
+                        <div><div class="font-bold text-sm text-gray-800">Outro (Manualmente)</div></div><span class="icone-check text-gray-400">➔</span>
                     </button>
                 </div>
-
                 <div id="container-finalizar-rapido" class="hidden mb-4">
-                    <button type="button" onclick="gerarTelaSucesso()" class="w-full bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide">
-                        Finalizar Minuta
-                    </button>
+                    <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-observacao')" class="w-full bg-[#002d72] text-white py-3 rounded text-xs">Próximo</button>
                 </div>
-
-                <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
-                    Voltar
-                </button>
+                <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
             </div>
 
+            <!-- ETAPA 4: TOMADOR MANUAL -->
             <div id="etapa-tomador-manual" class="hidden">
-                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Dados do Tomador (Outro)</h3>
+                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Dados do Tomador</h3>
                 <div class="space-y-3 mb-6">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nome / Razão Social</label>
-                        <input type="text" placeholder="Digite o nome completo" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none">
+                        <input type="text" id="tom-nome" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">CNPJ / CPF</label>
-                        <input type="text" placeholder="Apenas números" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-700 focus:outline-none">
+                        <input type="text" id="tom-documento" class="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs focus:outline-none">
                     </div>
                 </div>
-
                 <div class="flex space-x-3">
-                    <button type="button" onclick="mudarEtapa('etapa-tomador-manual', 'etapa-tomador-escolha')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded text-xs tracking-wide">
-                        Voltar
-                    </button>
-                    <button type="button" onclick="gerarTelaSucesso()" class="w-2/3 bg-[#009ee3] text-white font-bold py-3 px-4 rounded text-xs tracking-wide shadow-sm">
-                        Finalizar Minuta
-                    </button>
+                    <button type="button" onclick="mudarEtapa('etapa-tomador-manual', 'etapa-tomador-escolha')" class="w-1/3 bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
+                    <button type="button" onclick="mudarEtapa('etapa-tomador-manual', 'etapa-observacao')" class="w-2/3 bg-[#002d72] text-white py-3 rounded text-xs">Próximo</button>
                 </div>
             </div>
 
+            <!-- ETAPA 5: OBSERVAÇÃO -->
+            <div id="etapa-observacao" class="hidden">
+                <h3 class="text-[#002d72] font-bold text-xs uppercase mb-4">Observações Adicionais</h3>
+                <textarea id="campo-observacao" rows="4" placeholder="Ex: Cuidado frágil..." class="w-full border border-gray-300 rounded p-3 text-xs mb-6 focus:outline-none resize-none"></textarea>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="voltarDaObservacao()" class="w-1/3 bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
+                    <button type="button" onclick="gerarTelaSucesso()" class="w-2/3 bg-[#009ee3] text-white font-bold py-3 rounded text-xs">Finalizar Minuta</button>
+                </div>
+            </div>
         </div>
     </main>
 
+    <!-- TELA DE SUCESSO -->
     <div id="tela-sucesso" class="hidden flex-1 px-4 py-8 bg-gray-50/50">
-        <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center shadow-sm">
-            <div class="flex items-center space-x-2.5 mb-6">
-                <div class="bg-[#2e8540] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-xs">✓</div>
-                <span class="text-[#2e8540] font-semibold text-base tracking-tight">Minuta enviada com sucesso!</span>
+        <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center">
+            <div class="text-[#2e8540] font-semibold text-base mb-6">✓ Minuta finalizada com sucesso!</div>
+            <div class="w-full bg-white border border-gray-100 rounded-lg p-5 text-center mb-4">
+                <div class="text-gray-500 text-xs mb-1">Número da Minuta</div>
+                <div id="codigo-minuta-gerado" class="text-[#002d72] font-black text-xl">AZC-XXXXXXXXX</div>
             </div>
 
-            <div class="w-full bg-white border border-gray-100 rounded-lg p-5 text-center shadow-xs mb-2">
-                <div class="text-gray-500 text-xs font-medium mb-1">Número da Minuta</div>
-                <div id="codigo-minuta-gerado" class="text-[#002d72] font-black text-xl tracking-wide mb-1">AZC-XXXXXXXXX</div>
-                <div class="text-gray-400 text-[11px]">Guarde este número para consultar sua minuta.</div>
-            </div>
+            <button onclick="baixarPDFMinuta()" class="w-full bg-[#2e8540] text-white font-bold py-3 rounded-lg text-xs mb-4">
+                🖨️ Preencher e Baixar PDF Original
+            </button>
 
-            <div class="w-full grid grid-cols-2 gap-3 mt-4">
-                <button onclick="reiniciarFluxo()" class="w-full bg-white border border-[#002d72] text-[#002d72] font-bold py-3 rounded-lg text-xs text-center">
-                    Nova Minuta
-                </button>
-                <button onclick="alert('Consultando...')" class="w-full bg-[#002d72] text-white font-bold py-3 rounded-lg text-xs text-center">
-                    Consultar Minuta
-                </button>
+            <div class="w-full grid grid-cols-2 gap-3">
+                <button onclick="reiniciarFluxo()" class="w-full bg-white border border-[#002d72] text-[#002d72] font-bold py-3 rounded-lg text-xs">Nova Minuta</button>
+                <button onclick="alert('Consultando...')" class="w-full bg-[#002d72] text-white font-bold py-3 rounded-lg text-xs">Consultar</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO SEU GITHUB - SUBSTITUA APENAS ESTE LINK ABAIXO:
+        // Defina aqui a URL da sua base Excel do GitHub
         const urlGitHub = "https://raw.githubusercontent.com/cristianop1987/minuta/main/bases.xlsx";
+        
+        // Defina aqui a URL direta para o seu arquivo de Minuta PDF modelo intacto enviado
+        const urlOriginalPdf = "https://raw.githubusercontent.com/cristianop1987/minuta/main/Minuta%20eletronica.pdf"; 
 
         window.dadosPlanilhaGlobal = [];
         let tomadorSelecionado = "";
         let modalidadeEntrega = "";
         let unidadeSelecionada = "";
+        let minutaGeradaCodigo = "";
 
-        // Função que baixa o arquivo Excel do GitHub assim que a página carrega
         async function carregarDadosDoGitHub() {
             const statusDiv = document.getElementById('status-planilha');
             try {
                 const response = await fetch(urlGitHub);
-                if (!response.ok) throw new Error("Erro de rede");
+                if (!response.ok) throw new Error();
                 const buffer = await response.arrayBuffer();
                 const data = new Uint8Array(buffer);
                 const workbook = XLSX.read(data, { type: 'array' });
-                
-                // Pega a primeira aba (Aba Nacional)
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // Range 5 ignora os cabeçalhos iniciais vazios, começando na linha 6 oficial (onde estão as colunas SIGLA SK, etc)
-                const jsonRaw = XLSX.utils.sheet_to_json(worksheet, { range: 5 });
-                
-                // Mapeia removendo linhas sem dados importantes
+                const jsonRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 5 });
                 window.dadosPlanilhaGlobal = jsonRaw.filter(row => row['SIGLA SK'] || row['CIDADE']);
-                
-                statusDiv.innerHTML = `✅ ${window.dadosPlanilhaGlobal.length} bases (Lojas & TECA) sincronizadas do GitHub!`;
+                statusDiv.innerHTML = `✅ ${window.dadosPlanilhaGlobal.length} bases sincronizadas do GitHub!`;
                 statusDiv.className = "bg-green-50 text-green-700 text-[11px] text-center py-1.5 font-semibold border-b border-green-100";
-                
                 popularEstados();
             } catch (error) {
-                console.error(error);
-                statusDiv.innerHTML = "⚠️ Não foi possível carregar o Excel do GitHub. Verifique a URL.";
+                statusDiv.innerHTML = "⚠️ Não foi possível carregar o Excel do GitHub.";
                 statusDiv.className = "bg-red-50 text-red-700 text-[11px] text-center py-1.5 font-semibold border-b border-red-100";
             }
         }
 
-        // Popula o select de Estados em ordem alfabética baseado na coluna UF
         function popularEstados() {
             const selectEstado = document.getElementById('select-entrega-estado');
             selectEstado.innerHTML = '<option value="">Selecione...</option>';
-            
-            // Extrai as UFs únicas tirando linhas inválidas
-            const ufsunicas = [...new Set(window.dadosPlanilhaGlobal
-                .map(item => item['UF'] ? item['UF'].toString().toUpperCase().trim() : '')
-                .filter(uf => uf && uf.length === 2)
-            )].sort();
-
+            const ufsunicas = [...new Set(window.dadosPlanilhaGlobal.map(item => item['UF'] ? item['UF'].toString().toUpperCase().trim() : '').filter(uf => uf.length === 2))].sort();
             ufsunicas.forEach(uf => {
                 const option = document.createElement('option');
-                option.value = uf;
-                option.textContent = uf;
-                selectEstado.appendChild(option);
+                option.value = uf; option.textContent = uf; selectEstado.appendChild(option);
             });
         }
 
-        // Filtra as localidades daquele estado mantendo TUDO (Lojas, Agências e TECA)
         function filtrarCidadesPorEstado() {
             const uf = document.getElementById('select-entrega-estado').value;
             const containerCidade = document.getElementById('container-entrega-cidade');
             const selectCidade = document.getElementById('select-entrega-cidade');
-            const btnProximo = document.getElementById('btn-proximo-entrega');
-
             selectCidade.innerHTML = '<option value="">Selecione...</option>';
-            btnProximo.disabled = true;
-            btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
-            unidadeSelecionada = "";
-
-            if (!uf) {
-                containerCidade.classList.add('hidden');
-                return;
-            }
-
+            if (!uf) { containerCidade.classList.add('hidden'); return; }
             containerCidade.classList.remove('hidden');
-
-            // Filtra as linhas daquele estado específico
-            const filtrados = window.dadosPlanilhaGlobal.filter(item => {
-                const itemUf = item['UF'] ? item['UF'].toString().toUpperCase().trim() : '';
-                return itemUf === uf;
-            });
-
-            // Ordena as localidades em ordem alfabética pelo nome da cidade
-            filtrados.sort((a, b) => {
-                const cidA = a['CIDADE'] ? a['CIDADE'].toString() : '';
-                const cidB = b['CIDADE'] ? b['CIDADE'].toString() : '';
-                return cidA.localeCompare(cidB);
-            });
-
-            // Adiciona no menu drop-down mantendo o formato clássico "Cidade - Sigla"
+            
+            const filtrados = window.dadosPlanilhaGlobal.filter(item => (item['UF'] || '').toString().toUpperCase().trim() === uf);
             filtrados.forEach(item => {
-                const cidade = item['CIDADE'] ? item['CIDADE'].toString().trim() : 'S/C';
-                const sigla = item['SIGLA SK'] ? item['SIGLA SK'].toString().trim() : 'S/S';
-                const modelo = item['MODELO DE NEGOCIO'] ? ` (${item['MODELO DE NEGOCIO'].toString().trim()})` : '';
-                
                 const option = document.createElement('option');
-                option.value = `${cidade} - ${sigla}`;
-                option.textContent = `${cidade} - ${sigla}${modelo}`;
+                option.value = `${item['CIDADE']} - ${item['SIGLA SK']}`;
+                option.textContent = `${item['CIDADE']} - ${item['SIGLA SK']}`;
                 selectCidade.appendChild(option);
             });
         }
 
         function selecionarUnidadeFinal() {
-            const val = document.getElementById('select-entrega-cidade').value;
-            const btnProximo = document.getElementById('btn-proximo-entrega');
-
-            if (val) {
-                unidadeSelecionada = val;
-                btnProximo.disabled = false;
-                btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                btnProximo.disabled = true;
-                btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
-            }
+            unidadeSelecionada = document.getElementById('select-entrega-cidade').value;
+            const btn = document.getElementById('btn-proximo-entrega');
+            if(unidadeSelecionada) { btn.disabled = false; btn.classList.remove('opacity-50','cursor-not-allowed'); }
         }
 
-        // Executa o download da planilha assim que abrir o app
-        document.addEventListener('DOMContentLoaded', carregarDadosDoGitHub);
+        function selecionarTipoEntrega(tipo, el) {
+            modalidadeEntrega = tipo;
+            document.getElementById('btn-entrega-domicilio').className = "w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200";
+            document.getElementById('btn-entrega-aeroporto').className = "w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200";
+            document.querySelectorAll('.icone-check-entrega').forEach(i => { i.innerText = "➔"; i.className = "icone-check-entrega text-gray-400"; });
 
-        // Chamadas de APIs públicas normais para CNPJ e CEP
-        async function verificarDocumento(prefixo) {
-            const docInput = document.getElementById(`${prefixo}-documento`).value.replace(/\D/g, '');
-            if (docInput.length === 14) {
-                try {
-                    const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${docInput}`);
-                    if (!response.ok) throw new Error();
-                    const data = await response.json();
-                    document.getElementById(`${prefixo}-nome`).value = data.razao_social || data.nome_fantasia || '';
-                    document.getElementById(`${prefixo}-cep`).value = data.cep || '';
-                    document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
-                    document.getElementById(`${prefixo}-numero`).value = data.numero || '';
-                    document.getElementById(`${prefixo}-complemento`).value = data.complemento || '';
-                    document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
-                    document.getElementById(`${prefixo}-estado`).value = data.uf || '';
-                    document.getElementById(`${prefixo}-cidade`).value = data.municipio || '';
-                } catch (error) {
-                    alert('Erro ao buscar CNPJ.');
+            el.className = "w-full border-2 border-[#002d72] bg-blue-50/40 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200 shadow-sm";
+            el.querySelector('.icone-check-entrega').innerText = "✓";
+            el.querySelector('.icone-check-entrega').className = "icone-check-entrega text-[#002d72] font-bold";
+
+            document.getElementById('quadro-aeroportos').classList.toggle('hidden', tipo !== 'aeroporto');
+            
+            const btn = document.getElementById('btn-proximo-entrega');
+            if (tipo === 'domicilio') { 
+                btn.disabled = false; 
+                btn.classList.remove('opacity-50','cursor-not-allowed'); 
+            } else {
+                if(!unidadeSelecionada) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50','cursor-not-allowed');
                 }
             }
         }
 
-        async function buscarEnderecoPorCep(prefixo) {
-            const cepInput = document.getElementById(`${prefixo}-cep`).value.replace(/\D/g, '');
-            if (cepInput.length === 8) {
-                try {
-                    const response = await fetch(`https://viacep.com.br/ws/${cepInput}/json/`);
-                    if (!response.ok) throw new Error();
-                    const data = await response.json();
-                    if (!data.erro) {
-                        document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
-                        document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
-                        document.getElementById(`${prefixo}-estado`).value = data.uf || '';
-                        document.getElementById(`${prefixo}-cidade`).value = data.localidade || '';
+        function verificarDocumento(prefixo) {
+            const doc = document.getElementById(`${prefixo}-documento`).value.replace(/\D/g, '');
+            if (doc.length === 14) {
+                fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`).then(r => r.json()).then(data => {
+                    document.getElementById(`${prefixo}-nome`).value = data.razao_social || '';
+                    document.getElementById(`${prefixo}-cep`).value = data.cep || '';
+                    document.getElementById(`${prefixo}-rua`).value = data.logradouro || '';
+                    document.getElementById(`${prefixo}-bairro`).value = data.bairro || '';
+                    document.getElementById(`${prefixo}-estado`).value = data.uf || '';
+                    document.getElementById(`${prefixo}-cidade`).value = data.municipio || '';
+                });
+            }
+        }
+
+        function buscarEnderecoPorCep(prefixo) {
+            const doc = document.getElementById(`${prefixo}-cep`).value.replace(/\D/g, '');
+            if (doc.length === 8) {
+                fetch(`https://viacep.com.br/ws/${doc}/json/`).then(r => r.json()).then(data => {
+                    if(!data.erro) {
+                        document.getElementById(`${prefixo}-rua`).value = data.logradouro;
+                        document.getElementById(`${prefixo}-bairro`).value = data.bairro;
+                        document.getElementById(`${prefixo}-estado`).value = data.uf;
+                        document.getElementById(`${prefixo}-cidade`).value = data.localidade;
                     }
-                } catch (error) {}
+                });
             }
         }
 
-        // Fluxos normais de navegação do App
-        function mudarEtapa(idAtual, idProxima) {
-            document.getElementById(idAtual).classList.replace('block', 'hidden');
-            document.getElementById(idProxima).classList.replace('hidden', 'block');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function selecionarTipoEntrega(tipo, elemento) {
-            modalidadeEntrega = tipo;
-            unidadeSelecionada = "";
-            
-            ['btn-entrega-domicilio', 'btn-entrega-aeroporto'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.classList.remove('border-[#002d72]', 'bg-blue-50/50');
-                btn.classList.add('border-gray-200');
-                btn.querySelector('.icone-check-entrega').innerText = '➔';
-                btn.querySelector('.label-entrega').classList.remove('text-[#002d72]');
-            });
-
-            elemento.classList.remove('border-gray-200');
-            elemento.classList.add('border-[#002d72]', 'bg-blue-50/50');
-            elemento.querySelector('.icone-check-entrega').innerText = '✓';
-            elemento.querySelector('.label-entrega').classList.add('text-[#002d72]');
-
-            const quadro = document.getElementById('quadro-aeroportos');
-            const btnProximo = document.getElementById('btn-proximo-entrega');
-
-            if (tipo === 'aeroporto') {
-                quadro.classList.remove('hidden');
-                btnProximo.disabled = true;
-                btnProximo.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                quadro.classList.add('hidden');
-                btnProximo.disabled = false;
-                btnProximo.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        function validarEAvancarEntrega() {
-            mudarEtapa('etapa-tipo-entrega', 'etapa-tomador-escolha');
-        }
-
-        function selecionarTomadorRapido(tipo, elemento) {
+        function selecionarTomadorRapido(tipo, el) {
             tomadorSelecionado = tipo;
-            ['btn-tomador-remetente', 'btn-tomador-destinatario'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.classList.remove('border-[#002d72]', 'bg-blue-50/50');
-                btn.classList.add('border-gray-200');
-                btn.querySelector('.icone-check').innerText = '➔';
-                btn.querySelector('.label-tomador').classList.remove('text-[#002d72]');
-            });
-
-            elemento.classList.remove('border-gray-200');
-            elemento.classList.add('border-[#002d72]', 'bg-blue-50/50');
-            elemento.querySelector('.icone-check').innerText = '✓';
-            elemento.querySelector('.label-tomador').classList.add('text-[#002d72]');
-
+            limparDestaqueTomadores();
+            el.className = "btn-tomador-opcao w-full border-2 border-[#002d72] bg-blue-50/40 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200 shadow-sm";
+            el.querySelector('.icone-check').innerText = "✓";
+            el.querySelector('.icone-check').className = "icone-check text-[#002d72] font-bold";
             document.getElementById('container-finalizar-rapido').classList.remove('hidden');
         }
 
+        function marcarTomadorOutro(el) { 
+            tomadorSelecionado = "Outro"; 
+            limparDestaqueTomadores();
+            el.className = "btn-tomador-opcao w-full border-2 border-[#002d72] bg-blue-50/40 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200 shadow-sm";
+            el.querySelector('.icone-check').innerText = "✓";
+            el.querySelector('.icone-check').className = "icone-check text-[#002d72] font-bold";
+            setTimeout(() => { mudarEtapa('etapa-tomador-escolha', 'etapa-tomador-manual'); }, 250);
+        }
+
+        function limparDestaqueTomadores() {
+            document.querySelectorAll('.btn-tomador-opcao').forEach(botao => {
+                botao.className = "btn-tomador-opcao w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200";
+                const icone = botao.querySelector('.icone-check');
+                if(icone) { icone.innerText = "➔"; icone.className = "icone-check text-gray-400"; }
+            });
+        }
+
+        function voltarDaObservacao() { mudarEtapa('etapa-observacao', tomadorSelecionado === 'Outro' ? 'etapa-tomador-manual' : 'etapa-tomador-escolha'); }
+        function mudarEtapa(idA, idP) { document.getElementById(idA).classList.replace('block', 'hidden'); document.getElementById(idP).classList.replace('hidden', 'block'); }
+
         function gerarTelaSucesso() {
-            const randomMinuta = Math.floor(10000 + Math.random() * 90000);
-            document.getElementById('codigo-minuta-gerado').innerText = `AZC-20260707-${randomMinuta}`;
+            minutaGeradaCodigo = `AZC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+            document.getElementById('codigo-minuta-gerado').innerText = minutaGeradaCodigo;
             mudarEtapa('conteudo-formulario', 'tela-sucesso');
         }
 
-        function reiniciarFluxo() {
-            document.getElementById('tela-sucesso').classList.replace('block', 'hidden');
-            document.getElementById('conteudo-formulario').classList.replace('hidden', 'block');
-            document.querySelectorAll('input').forEach(input => input.value = "");
-            document.getElementById('etapa-remetente').classList.replace('hidden', 'block');
-            document.getElementById('etapa-destinatario').classList.replace('block', 'hidden');
-            document.getElementById('etapa-tipo-entrega').classList.replace('block', 'hidden');
-            document.getElementById('etapa-tomador-escolha').classList.replace('block', 'hidden');
-            document.getElementById('etapa-tomador-manual').classList.replace('block', 'hidden');
-            document.getElementById('container-finalizar-rapido').classList.add('hidden');
+        // FUNÇÃO PRINCIPAL: PREENCHE EXATAMENTE O PDF ORIGINAL CARREGADO
+        async function baixarPDFMinuta() {
+            const { PDFDocument, rgb } = PDFLib;
+
+            try {
+                // Carrega o arquivo binário do PDF enviado
+                const existentePdfBytes = await fetch(urlOriginalPdf).then(res => res.arrayBuffer());
+                const pdfDoc = await PDFDocument.load(existentePdfBytes);
+                
+                const formulario = pdfDoc.getForm();
+                const camposExistentes = formulario.getFields().map(f => f.getName());
+
+                // Coleta e formata as variáveis do formulário HTML
+                const remNome = document.getElementById('rem-nome').value.toUpperCase();
+                const remDoc = document.getElementById('rem-documento').value;
+                const remEnd = `${document.getElementById('rem-rua').value}, ${document.getElementById('rem-numero').value} - ${document.getElementById('rem-bairro').value}`.toUpperCase();
+                const remCidade = document.getElementById('rem-cidade').value.toUpperCase();
+                const remUf = document.getElementById('rem-estado').value.toUpperCase();
+                const remCep = document.getElementById('rem-cep').value;
+                const remFone = document.getElementById('rem-fone').value;
+
+                const destNome = document.getElementById('dest-nome').value.toUpperCase();
+                const destDoc = document.getElementById('dest-documento').value;
+                const destEnd = `${document.getElementById('dest-rua').value}, ${document.getElementById('dest-numero').value} - ${document.getElementById('dest-bairro').value}`.toUpperCase();
+                const destComp = document.getElementById('dest-complemento').value.toUpperCase();
+                const destCidade = document.getElementById('dest-cidade').value.toUpperCase();
+                const destUf = document.getElementById('dest-estado').value.toUpperCase();
+                const destCep = document.getElementById('dest-cep').value;
+                const destFone = document.getElementById('dest-fone').value;
+
+                let tomNome = "", tomDoc = "";
+                if (tomadorSelecionado === 'Outro') {
+                    tomNome = document.getElementById('tom-nome').value.toUpperCase();
+                    tomDoc = document.getElementById('tom-documento').value;
+                } else {
+                    tomNome = tomadorSelecionado === 'Remetente' ? remNome : destNome;
+                    tomDoc = tomadorSelecionado === 'Remetente' ? remDoc : destDoc;
+                }
+
+                const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
+                const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+                // ABORDAGEM A: Se o PDF possuir os inputs de formulário nativos mapeados por ID/Nome
+                if (camposExistentes.length > 0) {
+                    try {
+                        // Altere as strings abaixo de acordo com o nome exato do campo no PDF se necessário
+                        if(formulario.getTextField('rem_nome')) formulario.getTextField('rem_nome').setText(remNome);
+                        if(formulario.getTextField('rem_cnpj')) formulario.getTextField('rem_cnpj').setText(remDoc);
+                        if(formulario.getTextField('rem_endereco')) formulario.getTextField('rem_endereco').setText(remEnd);
+                        if(formulario.getTextField('rem_municipio')) formulario.getTextField('rem_municipio').setText(remCidade);
+                        if(formulario.getTextField('rem_uf')) formulario.getTextField('rem_uf').setText(remUf);
+                        if(formulario.getTextField('rem_cep')) formulario.getTextField('rem_cep').setText(remCep);
+                        if(formulario.getTextField('rem_fone')) formulario.getTextField('rem_fone').setText(remFone);
+
+                        if(formulario.getTextField('dest_nome')) formulario.getTextField('dest_nome').setText(destNome);
+                        if(formulario.getTextField('dest_cnpj')) formulario.getTextField('dest_cnpj').setText(destDoc);
+                        if(formulario.getTextField('dest_endereco')) formulario.getTextField('dest_endereco').setText(destEnd);
+                        if(formulario.getTextField('dest_complemento')) formulario.getTextField('dest_complemento').setText(destComp);
+                        if(formulario.getTextField('dest_municipio')) formulario.getTextField('dest_municipio').setText(destCidade);
+                        if(formulario.getTextField('dest_uf')) formulario.getTextField('dest_uf').setText(destUf);
+                        if(formulario.getTextField('dest_cep')) formulario.getTextField('dest_cep').setText(destCep);
+                        if(formulario.getTextField('dest_fone')) formulario.getTextField('dest_fone').setText(destFone);
+
+                        if(formulario.getTextField('tom_nome')) formulario.getTextField('tom_nome').setText(tomNome);
+                        if(formulario.getTextField('tom_cnpj')) formulario.getTextField('tom_cnpj').setText(tomDoc);
+                        if(formulario.getTextField('observacao')) formulario.getTextField('observacao').setText(obsTexto);
+                        if(formulario.getTextField('data')) formulario.getTextField('data').setText(dataHoje);
+                        
+                        formulario.flatten(); // Congela o texto na estrutura do arquivo original
+                    } catch(e) {
+                        ajustarCamposManualmente(pdfDoc, { remNome, remDoc, remEnd, remCidade, remUf, remCep, remFone, destNome, destDoc, destEnd, destComp, destCidade, destUf, destCep, destFone, tomNome, tomDoc, obsTexto, dataHoje });
+                    }
+                } else {
+                    // ABORDAGEM B: Se o PDF for uma imagem plana, "carimba" nas coordenadas exatas
+                    ajustarCamposManualmente(pdfDoc, { remNome, remDoc, remEnd, remCidade, remUf, remCep, remFone, destNome, destDoc, destEnd, destComp, destCidade, destUf, destCep, destFone, tomNome, tomDoc, obsTexto, dataHoje });
+                }
+
+                const pdfBytesModificado = await pdfDoc.save();
+                const blob = new Blob([pdfBytesModificado], { type: "application/pdf" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Minuta_Oficial_${minutaGeradaCodigo}.pdf`;
+                link.click();
+
+            } catch (erro) {
+                console.error(erro);
+                alert("Erro ao ler ou processar o modelo PDF original. Verifique as configurações de CORS do servidor.");
+            }
         }
+
+        // Desenha textos baseando-se no canto inferior esquerdo da folha como ponto (0,0)
+        function ajustarCamposManualmente(pdfDoc, dados) {
+            const pagina = pdfDoc.getPages()[0];
+            
+            // REMETENTE
+            pagina.drawText(dados.remNome, { x: 75, y: 692, size: 9 });
+            pagina.drawText(dados.remDoc, { x: 95, y: 680, size: 9 });
+            pagina.drawText(dados.remEnd, { x: 88, y: 668, size: 9 });
+            pagina.drawText(dados.remCidade, { x: 88, y: 644, size: 9 });
+            pagina.drawText(dados.remUf, { x: 260, y: 644, size: 9 });
+            pagina.drawText(dados.remCep, { x: 310, y: 644, size: 9 });
+            pagina.drawText(dados.remFone, { x: 75, y: 632, size: 9 });
+
+            // DESTINATÁRIO
+            pagina.drawText(dados.destNome, { x: 75, y: 578, size: 9 });
+            pagina.drawText(dados.destDoc, { x: 95, y: 566, size: 9 });
+            pagina.drawText(dados.destEnd, { x: 88, y: 554, size: 9 });
+            pagina.drawText(dados.destComp, { x: 108, y: 542, size: 9 });
+            pagina.drawText(dados.destCidade, { x: 88, y: 530, size: 9 });
+            pagina.drawText(dados.destUf, { x: 260, y: 530, size: 9 });
+            pagina.drawText(dados.destCep, { x: 310, y: 530, size: 9 });
+            pagina.drawText(dados.destFone, { x: 75, y: 518, size: 9 });
+
+            // TOMADOR
+            pagina.drawText(dados.tomNome, { x: 75, y: 475, size: 9 });
+            pagina.drawText(dados.tomDoc, { x: 95, y: 463, size: 9 });
+
+            // OBSERVAÇÃO
+            pagina.drawText(dados.obsTexto, { x: 75, y: 418, size: 9 });
+
+            // DATA
+            pagina.drawText(dados.dataHoje, { x: 155, y: 228, size: 10 });
+        }
+
+        function reiniciarFluxo() { location.reload(); }
+        document.addEventListener('DOMContentLoaded', carregarDadosDoGitHub);
     </script>
 </body>
 </html>
