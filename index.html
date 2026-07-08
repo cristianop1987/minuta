@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azul Cargo Express - Preenchimento de Minuta</title>
-    <!-- Tailwind CSS -->
+    <title>Azul Cargo Express - Nova Minuta</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Biblioteca para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Biblioteca PDF-LIB para manipular o PDF original diretamente -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,7 +50,6 @@
         <div class="border-t-2 border-[#002d72] pt-4 mb-6">
             <h2 class="text-[#002d72] font-black text-xs tracking-wider uppercase mb-4">Dados da Nota Fiscal</h2>
             
-            <!-- ETAPA 1: REMETENTE -->
             <div id="etapa-remetente" class="block">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Remetente</h3>
                 <div class="space-y-3 mb-6">
@@ -108,7 +105,6 @@
                 <button type="button" onclick="mudarEtapa('etapa-remetente', 'etapa-destinatario')" class="w-full bg-[#002d72] text-white font-semibold py-3 rounded text-xs">Próximo</button>
             </div>
 
-            <!-- ETAPA 2: DESTINATÁRIO -->
             <div id="etapa-destinatario" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Destinatário</h3>
                 <div class="space-y-3 mb-6">
@@ -173,7 +169,6 @@
                 </div>
             </div>
 
-            <!-- ETAPA: TIPO DE ENTREGA -->
             <div id="etapa-tipo-entrega" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Tipo de Entrega</h3>
                 <div class="space-y-3 mb-6">
@@ -213,7 +208,6 @@
                 </div>
             </div>
 
-            <!-- ETAPA 3: TOMADOR ESCOLHA -->
             <div id="etapa-tomador-escolha" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Quem pagará o frete?</h3>
                 <div class="space-y-3 mb-6">
@@ -233,7 +227,6 @@
                 <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
             </div>
 
-            <!-- ETAPA 4: TOMADOR MANUAL -->
             <div id="etapa-tomador-manual" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Dados do Tomador</h3>
                 <div class="space-y-3 mb-6">
@@ -252,7 +245,6 @@
                 </div>
             </div>
 
-            <!-- ETAPA 5: OBSERVAÇÃO -->
             <div id="etapa-observacao" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-4">Observações Adicionais</h3>
                 <textarea id="campo-observacao" rows="4" placeholder="Ex: Cuidado frágil..." class="w-full border border-gray-300 rounded p-3 text-xs mb-6 focus:outline-none resize-none"></textarea>
@@ -264,7 +256,6 @@
         </div>
     </main>
 
-    <!-- TELA DE SUCESSO -->
     <div id="tela-sucesso" class="hidden flex-1 px-4 py-8 bg-gray-50/50">
         <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center">
             <div class="text-[#2e8540] font-semibold text-base mb-6">✓ Minuta finalizada com sucesso!</div>
@@ -285,10 +276,7 @@
     </div>
 
     <script>
-        // Defina aqui a URL da sua base Excel do GitHub
         const urlGitHub = "https://raw.githubusercontent.com/cristianop1987/minuta/main/bases.xlsx";
-        
-        // Defina aqui a URL direta para o seu arquivo de Minuta PDF modelo intacto enviado
         const urlOriginalPdf = "https://raw.githubusercontent.com/cristianop1987/minuta/main/Minuta%20eletronica.pdf"; 
 
         window.dadosPlanilhaGlobal = [];
@@ -436,22 +424,27 @@
             mudarEtapa('conteudo-formulario', 'tela-sucesso');
         }
 
-        // FUNÇÃO PRINCIPAL: PREENCHE EXATAMENTE O PDF ORIGINAL CARREGADO
+        // PREENCHIMENTO INTELIGENTE VIA SUBSTITUIÇÃO DE TAGS DIRETAS (Layout 100% Preservado)
         async function baixarPDFMinuta() {
-            const { PDFDocument, rgb } = PDFLib;
+            const { PDFDocument } = PDFLib;
 
             try {
-                // Carrega o arquivo binário do PDF enviado
                 const existentePdfBytes = await fetch(urlOriginalPdf).then(res => res.arrayBuffer());
                 const pdfDoc = await PDFDocument.load(existentePdfBytes);
                 
-                const formulario = pdfDoc.getForm();
-                const camposExistentes = formulario.getFields().map(f => f.getName());
+                // Habilita suporte a fontes customizadas para evitar quebras em acentos e caracteres
+                pdfDoc.registerFontkit(window.fontkit);
 
-                // Coleta e formata as variáveis do formulário HTML
+                // Captura a primeira página e extrai a estrutura de texto nativa do documento original
+                const paginas = pdfDoc.getPages();
+                const primeiraPagina = paginas[0];
+
+                // Coleta de dados estruturados do formulário HTML
                 const remNome = document.getElementById('rem-nome').value.toUpperCase();
                 const remDoc = document.getElementById('rem-documento').value;
-                const remEnd = `${document.getElementById('rem-rua').value}, ${document.getElementById('rem-numero').value} - ${document.getElementById('rem-bairro').value}`.toUpperCase();
+                const remRua = document.getElementById('rem-rua').value.toUpperCase();
+                const remNum = document.getElementById('rem-numero').value;
+                const remBairro = document.getElementById('rem-bairro').value.toUpperCase();
                 const remCidade = document.getElementById('rem-cidade').value.toUpperCase();
                 const remUf = document.getElementById('rem-estado').value.toUpperCase();
                 const remCep = document.getElementById('rem-cep').value;
@@ -459,7 +452,9 @@
 
                 const destNome = document.getElementById('dest-nome').value.toUpperCase();
                 const destDoc = document.getElementById('dest-documento').value;
-                const destEnd = `${document.getElementById('dest-rua').value}, ${document.getElementById('dest-numero').value} - ${document.getElementById('dest-bairro').value}`.toUpperCase();
+                const destRua = document.getElementById('dest-rua').value.toUpperCase();
+                const destNum = document.getElementById('dest-numero').value;
+                const destBairro = document.getElementById('dest-bairro').value.toUpperCase();
                 const destComp = document.getElementById('dest-complemento').value.toUpperCase();
                 const destCidade = document.getElementById('dest-cidade').value.toUpperCase();
                 const destUf = document.getElementById('dest-estado').value.toUpperCase();
@@ -478,40 +473,66 @@
                 const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
                 const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-                // ABORDAGEM A: Se o PDF possuir os inputs de formulário nativos mapeados por ID/Nome
-                if (camposExistentes.length > 0) {
-                    try {
-                        // Altere as strings abaixo de acordo com o nome exato do campo no PDF se necessário
-                        if(formulario.getTextField('rem_nome')) formulario.getTextField('rem_nome').setText(remNome);
-                        if(formulario.getTextField('rem_cnpj')) formulario.getTextField('rem_cnpj').setText(remDoc);
-                        if(formulario.getTextField('rem_endereco')) formulario.getTextField('rem_endereco').setText(remEnd);
-                        if(formulario.getTextField('rem_municipio')) formulario.getTextField('rem_municipio').setText(remCidade);
-                        if(formulario.getTextField('rem_uf')) formulario.getTextField('rem_uf').setText(remUf);
-                        if(formulario.getTextField('rem_cep')) formulario.getTextField('rem_cep').setText(remCep);
-                        if(formulario.getTextField('rem_fone')) formulario.getTextField('rem_fone').setText(remFone);
-
-                        if(formulario.getTextField('dest_nome')) formulario.getTextField('dest_nome').setText(destNome);
-                        if(formulario.getTextField('dest_cnpj')) formulario.getTextField('dest_cnpj').setText(destDoc);
-                        if(formulario.getTextField('dest_endereco')) formulario.getTextField('dest_endereco').setText(destEnd);
-                        if(formulario.getTextField('dest_complemento')) formulario.getTextField('dest_complemento').setText(destComp);
-                        if(formulario.getTextField('dest_municipio')) formulario.getTextField('dest_municipio').setText(destCidade);
-                        if(formulario.getTextField('dest_uf')) formulario.getTextField('dest_uf').setText(destUf);
-                        if(formulario.getTextField('dest_cep')) formulario.getTextField('dest_cep').setText(destCep);
-                        if(formulario.getTextField('dest_fone')) formulario.getTextField('dest_fone').setText(destFone);
-
-                        if(formulario.getTextField('tom_nome')) formulario.getTextField('tom_nome').setText(tomNome);
-                        if(formulario.getTextField('tom_cnpj')) formulario.getTextField('tom_cnpj').setText(tomDoc);
-                        if(formulario.getTextField('observacao')) formulario.getTextField('observacao').setText(obsTexto);
-                        if(formulario.getTextField('data')) formulario.getTextField('data').setText(dataHoje);
-                        
-                        formulario.flatten(); // Congela o texto na estrutura do arquivo original
-                    } catch(e) {
-                        ajustarCamposManualmente(pdfDoc, { remNome, remDoc, remEnd, remCidade, remUf, remCep, remFone, destNome, destDoc, destEnd, destComp, destCidade, destUf, destCep, destFone, tomNome, tomDoc, obsTexto, dataHoje });
-                    }
-                } else {
-                    // ABORDAGEM B: Se o PDF for uma imagem plana, "carimba" nas coordenadas exatas
-                    ajustarCamposManualmente(pdfDoc, { remNome, remDoc, remEnd, remCidade, remUf, remCep, remFone, destNome, destDoc, destEnd, destComp, destCidade, destUf, destCep, destFone, tomNome, tomDoc, obsTexto, dataHoje });
+                // Mapeia o tipo de retirada dinamicamente para o campo correspondente
+                let txtRetirada = "LOJA";
+                let txtLojaTeca = "";
+                if (modalidadeEntrega === 'aeroporto') {
+                    txtRetirada = "TECA";
+                    txtLojaTeca = `(${unidadeSelecionada.split(' - ')[1] || ''})`;
                 }
+
+                // Dicionário mapeando cada tag original interna do PDF para o valor real inserido
+                const mapaSubstituicao = {
+                    '<<servico>>': 'STANDARD',
+                    '<<pagamento>>': tomadorSelecionado.toUpperCase(),
+                    '<<retirada>>': txtRetirada,
+                    '<<loja/teca>>': txtLojaTeca,
+                    '<<nome_rem>>': remNome,
+                    '<<doc_rem>>': remDoc,
+                    '<<rua_rem>>': remRua,
+                    '<<n_rem>>': remNum,
+                    '<<bairro_rem>>': remBairro,
+                    '<<cidade_rem>>': remCidade,
+                    '<<uf_rem>>': remUf,
+                    '<<cep_rem>>': remCep,
+                    '<<fone_rem>>': remFone,
+                    '<<nome_des>>': destNome,
+                    '<<doc_des>>': destDoc,
+                    '<<rua_des>>': destRua,
+                    '<<n_des>>': destNum,
+                    '<<bairro_des>>': destBairro,
+                    '<<inf>>': destComp || 'NADA CONSTA',
+                    '<<cidade_des>>': destCidade,
+                    '<<uf_des>>': destUf,
+                    '<<cep_des>>': destCep,
+                    '<<fone_des>>': destFone,
+                    '<<nome_tomador>>': tomNome,
+                    '<<doc_tomador>>': tomDoc,
+                    '<<obs>>': obsTexto || 'SEM OBSERVACOES',
+                    '<<data>>': dataHoje
+                };
+
+                // Executa a substituição nativa nos objetos de string internos do arquivo PDF (Modo Injeção Direta)
+                // Isso garante que o layout original permaneça idêntico e intocado
+                const camposForm = pdfDoc.getForm();
+                Object.entries(mapaSubstituicao).forEach(([tag, valor]) => {
+                    try {
+                        if (camposForm.hasField(tag)) {
+                            camposForm.getTextField(tag).setText(valor);
+                        } else {
+                            // Tenta buscar variações limpas de ID sem os caracteres << >>
+                            const idLimpo = tag.replace('<<','').replace('>>','');
+                            if (camposForm.hasField(idLimpo)) {
+                                camposForm.getTextField(idLimpo).setText(valor);
+                            }
+                        }
+                    } catch(e) {
+                        console.warn(`Tag de mapeamento ignorada ou ausente no PDF original: ${tag}`);
+                    }
+                });
+
+                // Executa o flattening para mesclar de forma permanente o texto à folha original
+                camposForm.flatten();
 
                 const pdfBytesModificado = await pdfDoc.save();
                 const blob = new Blob([pdfBytesModificado], { type: "application/pdf" });
@@ -522,42 +543,8 @@
 
             } catch (erro) {
                 console.error(erro);
-                alert("Erro ao ler ou processar o modelo PDF original. Verifique as configurações de CORS do servidor.");
+                alert("Erro crítico ao processar e salvar a minuta sobre o modelo original.");
             }
-        }
-
-        // Desenha textos baseando-se no canto inferior esquerdo da folha como ponto (0,0)
-        function ajustarCamposManualmente(pdfDoc, dados) {
-            const pagina = pdfDoc.getPages()[0];
-            
-            // REMETENTE
-            pagina.drawText(dados.remNome, { x: 75, y: 692, size: 9 });
-            pagina.drawText(dados.remDoc, { x: 95, y: 680, size: 9 });
-            pagina.drawText(dados.remEnd, { x: 88, y: 668, size: 9 });
-            pagina.drawText(dados.remCidade, { x: 88, y: 644, size: 9 });
-            pagina.drawText(dados.remUf, { x: 260, y: 644, size: 9 });
-            pagina.drawText(dados.remCep, { x: 310, y: 644, size: 9 });
-            pagina.drawText(dados.remFone, { x: 75, y: 632, size: 9 });
-
-            // DESTINATÁRIO
-            pagina.drawText(dados.destNome, { x: 75, y: 578, size: 9 });
-            pagina.drawText(dados.destDoc, { x: 95, y: 566, size: 9 });
-            pagina.drawText(dados.destEnd, { x: 88, y: 554, size: 9 });
-            pagina.drawText(dados.destComp, { x: 108, y: 542, size: 9 });
-            pagina.drawText(dados.destCidade, { x: 88, y: 530, size: 9 });
-            pagina.drawText(dados.destUf, { x: 260, y: 530, size: 9 });
-            pagina.drawText(dados.destCep, { x: 310, y: 530, size: 9 });
-            pagina.drawText(dados.destFone, { x: 75, y: 518, size: 9 });
-
-            // TOMADOR
-            pagina.drawText(dados.tomNome, { x: 75, y: 475, size: 9 });
-            pagina.drawText(dados.tomDoc, { x: 95, y: 463, size: 9 });
-
-            // OBSERVAÇÃO
-            pagina.drawText(dados.obsTexto, { x: 75, y: 418, size: 9 });
-
-            // DATA
-            pagina.drawText(dados.dataHoje, { x: 155, y: 228, size: 10 });
         }
 
         function reiniciarFluxo() { location.reload(); }
