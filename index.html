@@ -279,7 +279,7 @@
 
     <script>
         const urlGitHub = "https://raw.githubusercontent.com/cristianop1987/minuta/main/bases.xlsx";
-        const urlOriginalDocx = "https://raw.githubusercontent.com/cristianop1987/minuta/main/minuta2.docx"; 
+        const urlOriginalDocx = "https://raw.githubusercontent.com/cristianop1987/minuta/main/minuta1.docx"; 
 
         window.dadosPlanilhaGlobal = [];
         let tomadorSelecionado = "";
@@ -297,7 +297,7 @@
                 const workbook = XLSX.read(data, { type: 'array' });
                 const jsonRaw = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 5 });
                 window.dadosPlanilhaGlobal = jsonRaw.filter(row => row['SIGLA SK'] || row['CIDADE']);
-                statusDiv.innerHTML = `✅ ${window.dadosPlanilhaGlobal.length} bases sincronizadas do GitHub!`;
+                statusDiv.innerHTML = `✅ ${window.dadosPlanilhaGlobal.length} bases synchronized do GitHub!`;
                 statusDiv.className = "bg-green-50 text-green-700 text-[11px] text-center py-1.5 font-semibold border-b border-green-100";
                 popularEstados();
             } catch (error) {
@@ -472,12 +472,17 @@
                 const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
                 const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-                let txtRetirada = "LOJA";
+                // MODIFICAÇÃO 1: Trata o campo {retirada} dinamicamente conforme escolha do usuário
+                let txtRetirada = "ENTREGA EM DOMICILIO";
                 let txtLojaTeca = "";
                 if (modalidadeEntrega === 'aeroporto') {
-                    txtRetirada = "TECA";
+                    txtRetirada = unidadeSelecionada.toUpperCase(); // Nome da Loja/Aeroporto escolhida
                     txtLojaTeca = `(${unidadeSelecionada.split(' - ')[1] || ''})`;
                 }
+
+                // MODIFICAÇÃO 2: Monta as strings compostas de endereço {end_rem} e {end_des}
+                const enderecoCompostoRemetente = `${remRua}, ${remNum} – ${remBairro}`;
+                const enderecoCompostoDestinatario = `${destRua}, ${destNum} – ${destBairro}`;
 
                 doc.render({
                     pagamento: tomadorSelecionado.toUpperCase(),
@@ -485,6 +490,7 @@
                     loja_teca: txtLojaTeca,
                     
                     nome_rem: remNome,
+                    nome_ren: remNome, 
                     doc_rem: remDoc,
                     rua_rem: remRua,
                     n_rem: remNum,
@@ -493,6 +499,7 @@
                     uf_rem: remUf,
                     cep_rem: remCep,
                     fone_rem: remFone,
+                    end_rem: enderecoCompostoRemetente, // Nova chave combinada para o Remetente
 
                     nome_des: destNome,
                     doc_des: destDoc,
@@ -504,6 +511,7 @@
                     uf_des: destUf,
                     cep_des: destCep,
                     fone_des: destFone,
+                    end_des: enderecoCompostoDestinatario, // Nova chave combinada para o Destinatário
 
                     nome_tomador: tomNome,
                     doc_tomador: tomDoc,
