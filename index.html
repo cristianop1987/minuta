@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azul Cargo Express - Nova Minuta</title>
+    <title>Azul Cargo Express - Nova Minuta (.DOCX)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Biblioteca para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.4/dist/fontkit.umd.min.js"></script>
     
+    <!-- Bibliotecas para manipular e gerar o Word (.docx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtempler/3.37.11/docxtempler.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -50,6 +55,7 @@
         <div class="border-t-2 border-[#002d72] pt-4 mb-6">
             <h2 class="text-[#002d72] font-black text-xs tracking-wider uppercase mb-4">Dados da Nota Fiscal</h2>
             
+            <!-- ETAPA 1: REMETENTE -->
             <div id="etapa-remetente" class="block">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Remetente</h3>
                 <div class="space-y-3 mb-6">
@@ -105,6 +111,7 @@
                 <button type="button" onclick="mudarEtapa('etapa-remetente', 'etapa-destinatario')" class="w-full bg-[#002d72] text-white font-semibold py-3 rounded text-xs">Próximo</button>
             </div>
 
+            <!-- ETAPA 2: DESTINATÁRIO -->
             <div id="etapa-destinatario" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Destinatário</h3>
                 <div class="space-y-3 mb-6">
@@ -169,6 +176,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA: TIPO DE ENTREGA -->
             <div id="etapa-tipo-entrega" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Tipo de Entrega</h3>
                 <div class="space-y-3 mb-6">
@@ -208,6 +216,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA 3: TOMADOR ESCOLHA -->
             <div id="etapa-tomador-escolha" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Quem pagará o frete?</h3>
                 <div class="space-y-3 mb-6">
@@ -227,6 +236,7 @@
                 <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
             </div>
 
+            <!-- ETAPA 4: TOMADOR MANUAL -->
             <div id="etapa-tomador-manual" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Dados do Tomador</h3>
                 <div class="space-y-3 mb-6">
@@ -245,6 +255,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA 5: OBSERVAÇÃO -->
             <div id="etapa-observacao" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-4">Observações Adicionais</h3>
                 <textarea id="campo-observacao" rows="4" placeholder="Ex: Cuidado frágil..." class="w-full border border-gray-300 rounded p-3 text-xs mb-6 focus:outline-none resize-none"></textarea>
@@ -256,6 +267,7 @@
         </div>
     </main>
 
+    <!-- TELA DE SUCESSO -->
     <div id="tela-sucesso" class="hidden flex-1 px-4 py-8 bg-gray-50/50">
         <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center">
             <div class="text-[#2e8540] font-semibold text-base mb-6">✓ Minuta finalizada com sucesso!</div>
@@ -264,8 +276,8 @@
                 <div id="codigo-minuta-gerado" class="text-[#002d72] font-black text-xl">AZC-XXXXXXXXX</div>
             </div>
 
-            <button onclick="baixarPDFMinuta()" class="w-full bg-[#2e8540] text-white font-bold py-3 rounded-lg text-xs mb-4">
-                🖨️ Preencher e Baixar PDF Original
+            <button onclick="baixarWordMinuta()" class="w-full bg-[#2e8540] text-white font-bold py-3 rounded-lg text-xs mb-4">
+                📝 Preencher e Baixar Word (.docx)
             </button>
 
             <div class="w-full grid grid-cols-2 gap-3">
@@ -277,7 +289,8 @@
 
     <script>
         const urlGitHub = "https://raw.githubusercontent.com/cristianop1987/minuta/main/bases.xlsx";
-        const urlOriginalPdf = "https://raw.githubusercontent.com/cristianop1987/minuta/main/Minuta%20eletronica.pdf"; 
+        // Atualizado para o novo padrão de nome em minúsculas
+        const urlOriginalDocx = "https://raw.githubusercontent.com/cristianop1987/minuta/main/minuta.docx"; 
 
         window.dadosPlanilhaGlobal = [];
         let tomadorSelecionado = "";
@@ -424,22 +437,19 @@
             mudarEtapa('conteudo-formulario', 'tela-sucesso');
         }
 
-        // PREENCHIMENTO INTELIGENTE VIA SUBSTITUIÇÃO DE TAGS DIRETAS (Layout 100% Preservado)
-        async function baixarPDFMinuta() {
-            const { PDFDocument } = PDFLib;
-
+        async function baixarWordMinuta() {
             try {
-                const existentePdfBytes = await fetch(urlOriginalPdf).then(res => res.arrayBuffer());
-                const pdfDoc = await PDFDocument.load(existentePdfBytes);
-                
-                // Habilita suporte a fontes customizadas para evitar quebras em acentos e caracteres
-                pdfDoc.registerFontkit(window.fontkit);
+                const response = await fetch(urlOriginalDocx);
+                if (!response.ok) throw new Error("Não foi possível transferir o arquivo .docx do GitHub.");
+                const blobOriginal = await response.blob();
+                const arrayBuffer = await blobOriginal.arrayBuffer();
 
-                // Captura a primeira página e extrai a estrutura de texto nativa do documento original
-                const paginas = pdfDoc.getPages();
-                const primeiraPagina = paginas[0];
+                const zip = new PizZip(arrayBuffer);
+                const doc = new docxtempler(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                });
 
-                // Coleta de dados estruturados do formulário HTML
                 const remNome = document.getElementById('rem-nome').value.toUpperCase();
                 const remDoc = document.getElementById('rem-documento').value;
                 const remRua = document.getElementById('rem-rua').value.toUpperCase();
@@ -473,7 +483,6 @@
                 const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
                 const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-                // Mapeia o tipo de retirada dinamicamente para o campo correspondente
                 let txtRetirada = "LOJA";
                 let txtLojaTeca = "";
                 if (modalidadeEntrega === 'aeroporto') {
@@ -481,69 +490,48 @@
                     txtLojaTeca = `(${unidadeSelecionada.split(' - ')[1] || ''})`;
                 }
 
-                // Dicionário mapeando cada tag original interna do PDF para o valor real inserido
-                const mapaSubstituicao = {
-                    '<<servico>>': 'STANDARD',
-                    '<<pagamento>>': tomadorSelecionado.toUpperCase(),
-                    '<<retirada>>': txtRetirada,
-                    '<<loja/teca>>': txtLojaTeca,
-                    '<<nome_rem>>': remNome,
-                    '<<doc_rem>>': remDoc,
-                    '<<rua_rem>>': remRua,
-                    '<<n_rem>>': remNum,
-                    '<<bairro_rem>>': remBairro,
-                    '<<cidade_rem>>': remCidade,
-                    '<<uf_rem>>': remUf,
-                    '<<cep_rem>>': remCep,
-                    '<<fone_rem>>': remFone,
-                    '<<nome_des>>': destNome,
-                    '<<doc_des>>': destDoc,
-                    '<<rua_des>>': destRua,
-                    '<<n_des>>': destNum,
-                    '<<bairro_des>>': destBairro,
-                    '<<inf>>': destComp || 'NADA CONSTA',
-                    '<<cidade_des>>': destCidade,
-                    '<<uf_des>>': destUf,
-                    '<<cep_des>>': destCep,
-                    '<<fone_des>>': destFone,
-                    '<<nome_tomador>>': tomNome,
-                    '<<doc_tomador>>': tomDoc,
-                    '<<obs>>': obsTexto || 'SEM OBSERVACOES',
-                    '<<data>>': dataHoje
-                };
+                doc.render({
+                    pagamento: tomadorSelecionado.toUpperCase(),
+                    retirada: txtRetirada,
+                    loja_teca: txtLojaTeca,
+                    
+                    nome_rem: remNome,
+                    doc_rem: remDoc,
+                    rua_rem: remRua,
+                    n_rem: remNum,
+                    bairro_rem: remBairro,
+                    cidade_rem: remCidade,
+                    uf_rem: remUf,
+                    cep_rem: remCep,
+                    fone_rem: remFone,
 
-                // Executa a substituição nativa nos objetos de string internos do arquivo PDF (Modo Injeção Direta)
-                // Isso garante que o layout original permaneça idêntico e intocado
-                const camposForm = pdfDoc.getForm();
-                Object.entries(mapaSubstituicao).forEach(([tag, valor]) => {
-                    try {
-                        if (camposForm.hasField(tag)) {
-                            camposForm.getTextField(tag).setText(valor);
-                        } else {
-                            // Tenta buscar variações limpas de ID sem os caracteres << >>
-                            const idLimpo = tag.replace('<<','').replace('>>','');
-                            if (camposForm.hasField(idLimpo)) {
-                                camposForm.getTextField(idLimpo).setText(valor);
-                            }
-                        }
-                    } catch(e) {
-                        console.warn(`Tag de mapeamento ignorada ou ausente no PDF original: ${tag}`);
-                    }
+                    nome_des: destNome,
+                    doc_des: destDoc,
+                    rua_des: destRua,
+                    n_des: destNum,
+                    bairro_des: destBairro,
+                    inf: destComp || 'NADA CONSTA',
+                    cidade_des: destCidade,
+                    uf_des: destUf,
+                    cep_des: destCep,
+                    fone_des: destFone,
+
+                    nome_tomador: tomNome,
+                    doc_tomador: tomDoc,
+                    obs: obsTexto || 'SEM OBSERVACOES',
+                    data: dataHoje
                 });
 
-                // Executa o flattening para mesclar de forma permanente o texto à folha original
-                camposForm.flatten();
+                const out = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                });
 
-                const pdfBytesModificado = await pdfDoc.save();
-                const blob = new Blob([pdfBytesModificado], { type: "application/pdf" });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `Minuta_Oficial_${minutaGeradaCodigo}.pdf`;
-                link.click();
+                saveAs(out, `Minuta_${minutaGeradaCodigo}.docx`);
 
             } catch (erro) {
                 console.error(erro);
-                alert("Erro crítico ao processar e salvar a minuta sobre o modelo original.");
+                alert("Erro ao processar as tags de texto no documento Word (.docx).");
             }
         }
 
