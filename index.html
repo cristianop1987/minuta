@@ -6,7 +6,6 @@
     <title>Azul Cargo Express - Nova Minuta (.PDF)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,6 +30,7 @@
 
         <div class="border-t-2 border-[#002d72] pt-4 mb-6">
             
+            <!-- ETAPA 1: REMETENTE -->
             <div id="etapa-remetente" class="block">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Remetente</h3>
                 <div class="space-y-3 mb-6">
@@ -86,6 +86,7 @@
                 <button type="button" onclick="mudarEtapa('etapa-remetente', 'etapa-destinatario')" class="w-full bg-[#002d72] text-white font-semibold py-3 rounded text-xs">Próximo</button>
             </div>
 
+            <!-- ETAPA 2: DESTINATÁRIO -->
             <div id="etapa-destinatario" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Destinatário</h3>
                 <div class="space-y-3 mb-6">
@@ -150,6 +151,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA 3: TIPO DE ENTREGA -->
             <div id="etapa-tipo-entrega" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Tipo de Entrega</h3>
                 <div class="space-y-3 mb-6">
@@ -189,6 +191,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA 4: ESCOLHA DO TOMADOR -->
             <div id="etapa-tomador-escolha" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-5">Quem pagará o frete?</h3>
                 
@@ -213,6 +216,7 @@
                 <button type="button" onclick="mudarEtapa('etapa-tomador-escolha', 'etapa-tipo-entrega')" class="w-full bg-gray-200 text-gray-700 py-3 rounded text-xs">Voltar</button>
             </div>
 
+            <!-- ETAPA 5: TOMADOR MANUAL -->
             <div id="etapa-tomador-manual" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-3">Dados do Tomador</h3>
                 <div class="space-y-3 mb-6">
@@ -231,6 +235,7 @@
                 </div>
             </div>
 
+            <!-- ETAPA 6: OBSERVAÇÃO -->
             <div id="etapa-observacao" class="hidden">
                 <h3 class="text-[#002d72] font-bold text-xs uppercase mb-4">Observações Adicionais</h3>
                 <textarea id="campo-observacao" rows="4" placeholder="Ex: Cuidado frágil..." class="w-full border border-gray-300 rounded p-3 text-xs mb-6 focus:outline-none resize-none"></textarea>
@@ -242,6 +247,7 @@
         </div>
     </main>
 
+    <!-- TELA DE SUCESSO -->
     <div id="tela-sucesso" class="hidden flex-1 px-4 py-8 bg-gray-50/50">
         <div class="bg-[#f4fbf7] border border-[#e1f5ea] rounded-xl p-5 flex flex-col items-center">
             <div class="text-[#2e8540] font-semibold text-base mb-6">✓ Minuta finalizada com sucesso!</div>
@@ -263,6 +269,8 @@
 
     <script>
         const urlGitHub = "https://raw.githubusercontent.com/cristianop1987/minuta/main/bases.xlsx";
+        // CONFIGURAÇÃO DO FIREBASE (Sincronizado)[cite: 1]
+        const urlPainelLoja = "https://painel-loja-c4618-default-rtdb.firebaseio.com/minutas.json"; 
 
         window.dadosPlanilhaGlobal = [];
         let tomadorSelecionado = "";
@@ -374,10 +382,15 @@
         }
 
         function verificarDocumento(prefixo) {
-            const doc = document.getElementById(`${prefixo}-documento`).value.replace(/\D/g, '');
+            const rawDoc = document.getElementById(`${prefixo}-documento`).value;
+            const doc = rawDoc.replace(/\D/g, '');
+            
             if (doc.length === 14) {
                 fetch(`https://brasilapi.com.br/api/cnpj/v1/${doc}`)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error();
+                    return r.json();
+                })
                 .then(data => {
                     document.getElementById(`${prefixo}-nome`).value = data.razao_social || '';
                     document.getElementById(`${prefixo}-cep`).value = data.cep || '';
@@ -392,10 +405,11 @@
                         document.getElementById(`${prefixo}-ie`).value = data.estabelecimento.inscricao_estadual;
                     } else {
                         document.getElementById(`${prefixo}-ie`).value = '';
-                        document.getElementById(`${prefixo}-ie`).placeholder = "Digitar manual";
                     }
                 })
-                .catch(err => console.error("Erro ao buscar CNPJ:", err));
+                .catch(err => {
+                    console.error("Falha ao consultar CNPJ:", err);
+                });
             }
         }
 
@@ -435,9 +449,7 @@
         function limparDestaqueTomadores() {
             document.querySelectorAll('.btn-tomador-opcao').forEach(botao => {
                 botao.className = "btn-tomador-opcao w-full border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center text-left transition-all duration-200";
-                if(botao.disabled) {
-                    botao.classList.add('opacity-40', 'cursor-not-allowed');
-                }
+                if(botao.disabled) botao.classList.add('opacity-40', 'cursor-not-allowed');
                 const icone = botao.querySelector('.icone-check');
                 if(icone) { icone.innerText = "➔"; icone.className = "icone-check text-gray-400"; }
             });
@@ -446,179 +458,245 @@
         function voltarDaObservacao() { mudarEtapa('etapa-observacao', tomadorSelecionado === 'Outro' ? 'etapa-tomador-manual' : 'etapa-tomador-escolha'); }
         function mudarEtapa(idA, idP) { document.getElementById(idA).classList.replace('block', 'hidden'); document.getElementById(idP).classList.replace('hidden', 'block'); }
 
-        function gerarTelaSucesso() {
+        async function gerarTelaSucesso() {
             minutaGeradaCodigo = `AZC-2026-${Math.floor(100000 + Math.random() * 900000)}`;
             document.getElementById('codigo-minuta-gerado').innerText = minutaGeradaCodigo;
+            
+            // Dispara a migração dos dados assincronamente para o Firebase[cite: 1]
+            await enviarDadosParaPainel();
+
             mudarEtapa('conteudo-formulario', 'tela-sucesso');
         }
 
-        function gerarEBaixarPDF() {
-            const remNome = document.getElementById('rem-nome').value.toUpperCase();
-            const remDoc = document.getElementById('rem-documento').value;
-            const remRua = document.getElementById('rem-rua').value.toUpperCase();
-            const remNum = document.getElementById('rem-numero').value;
-            const remBairro = document.getElementById('rem-bairro').value.toUpperCase();
-            const remCidade = document.getElementById('rem-cidade').value.toUpperCase();
-            const remUf = document.getElementById('rem-estado').value.toUpperCase();
-            const remCep = document.getElementById('rem-cep').value;
-            const remFone = document.getElementById('rem-fone').value;
-
-            const destNome = document.getElementById('dest-nome').value.toUpperCase();
-            const destDoc = document.getElementById('dest-documento').value;
-            const destRua = document.getElementById('dest-rua').value.toUpperCase();
-            const destNum = document.getElementById('dest-numero').value;
-            const destBairro = document.getElementById('dest-bairro').value.toUpperCase();
-            const destComp = document.getElementById('dest-complemento').value.toUpperCase();
-            const destCidade = document.getElementById('dest-cidade').value.toUpperCase();
-            const destUf = document.getElementById('dest-estado').value.toUpperCase();
-            const destCep = document.getElementById('dest-cep').value;
-            const destFone = document.getElementById('dest-fone').value;
-
-            let tomNome = "", tomDoc = "";
-            if (tomadorSelecionado === 'Outro') {
-                tomNome = document.getElementById('tom-nome').value.toUpperCase();
-                tomDoc = document.getElementById('tom-documento').value;
-            } else {
-                tomNome = tomadorSelecionado === 'Remetente' ? remNome : destNome;
-                tomDoc = tomadorSelecionado === 'Remetente' ? remDoc : destDoc;
-            }
-
-            const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
-            const dataHoje = new Date().toLocaleDateString('pt-BR');
-
-            let txtRetirada = "ENTREGA EM DOMICILIO";
-            if (modalidadeEntrega === 'aeroporto') {
-                txtRetirada = unidadeSelecionada.toUpperCase();
-            }
-
-            const endRem = `${remRua}, ${remNum} – ${remBairro}`;
-            const endDes = `${destRua}, ${destNum} – ${destBairro}`;
-
-            const elementoEscondido = document.createElement('div');
-            elementoEscondido.style.padding = '35px';
-            elementoEscondido.style.backgroundColor = '#ffffff';
-            elementoEscondido.style.color = '#1a1a1a';
-            elementoEscondido.style.fontSize = '11px';
-            elementoEscondido.style.fontFamily = 'Arial, sans-serif';
-
-            elementoEscondido.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002d72; padding-bottom: 10px; margin-bottom: 15px;">
-                    <div>
-                        <div style="color: #002d72; font-size: 26px; font-weight: 900; font-style: italic; line-height: 1;">Azulcargo</div>
-                        <div style="color: #009ee3; font-size: 13px; font-weight: bold; font-style: italic; text-transform: uppercase; padding-left: 30px;">Express</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="color: #002d72; font-weight: bold; font-size: 15px;">MINUTA DE DESPACHO DE CARGA</div>
-                        <div style="font-size: 12px; font-weight: bold; margin-top: 3px; color: #555;">Nº: ${minutaGeradaCodigo}</div>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 15px; font-size: 11px; line-height: 1.8; background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                    <strong style="margin-right: 10px;">Serviço:</strong> 
-                    <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Premium &nbsp;&nbsp;&nbsp;&nbsp; 
-                    <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Expresso &nbsp;&nbsp;&nbsp;&nbsp; 
-                    <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Standard <br>
-                    <strong>Pagamento do frete:</strong> ${tomadorSelecionado.toUpperCase()} <br>
-                    <strong>Modalidade:</strong> ${txtRetirada}
-                </div>
-
-                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                    <div style="flex: 1; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
-                        <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Remetente</div>
-                        <strong>Nome:</strong> ${remNome}<br>
-                        <strong>CNPJ/CPF:</strong> ${remDoc}<br>
-                        <strong>Endereço:</strong> ${endRem}<br>
-                        <strong>Município:</strong> ${remCidade} - ${remUf} &nbsp;&nbsp; <strong>CEP:</strong> ${remCep}<br>
-                        <strong>Fone:</strong> ${remFone}
-                    </div>
-                    <div style="flex: 1; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
-                        <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Destinatário</div>
-                        <strong>Nome:</strong> ${destNome}<br>
-                        <strong>CNPJ/CPF:</strong> ${destDoc}<br>
-                        <strong>Endereço:</strong> ${endDes}<br>
-                        <strong>Complemento:</strong> ${destComp || 'NADA CONSTA'}<br>
-                        <strong>Município:</strong> ${destCidade} - ${destUf} &nbsp;&nbsp; <strong>CEP:</strong> ${destCep}<br>
-                        <strong>Fone:</strong> ${destFone}
-                    </div>
-                </div>
-
-                <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                    <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Tomador do Serviço</div>
-                    <strong>Nome:</strong> ${tomNome} &nbsp;&nbsp;&nbsp;&nbsp; <strong>CNPJ/CPF:</strong> ${tomDoc}
-                </div>
-
-                <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                    <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Observação</div>
-                    <div style="font-size: 11px; min-height: 30px;">${obsTexto || 'SEM OBSERVACOES'}</div>
-                </div>
-
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; text-align: left;">
-                    <thead>
-                        <tr style="background-color: #002d72; color: white; font-size: 10px; text-transform: uppercase;">
-                            <th style="border: 1px solid #cbd5e1; padding: 6px;">Qtde. Vols.</th>
-                            <th style="border: 1px solid #cbd5e1; padding: 6px;">Peso (kg)</th>
-                            <th style="border: 1px solid #cbd5e1; padding: 6px;">Dimensões</th>
-                            <th style="border: 1px solid #cbd5e1; padding: 6px;">Descrição do Conteúdo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
-                            <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div style="font-size: 8.5px; color: #475569; line-height: 1.4; text-align: justify; border: 1px solid #e2e8f0; padding: 10px; border-radius: 4px; margin-bottom: 25px; background: #f8fafc;">
-                    Autorizo a emissão do conhecimento aéreo e o transporte do(os) volume(s) conforme especificações neste documento, responsabilizando-me por eventuais atrasos ou prejuízos decorrentes de informações incorretas ou incompletas nesta minuta. Declaro que: • O(s) volume(s) foi(foram) submetido(s) a controles de segurança apropriados até o momento da entrega à Azul Linhas Aéreas Brasileiras S.A.; O(s) volume(s) foi(foram) manuseado(s) por pessoas devidamente autorizadas e treinadas para identificar artigos proibidos e/ou perigosos para o transporte aéreo, e nenhum deles apresenta histórico criminal junto às autoridades policiais; • O(s) volume(s) foi(ram) devidamente conferido(s) e inspecionado(s) e está(ão) de acordo com a descrição contida no documento fiscal correspondente, cujas informações integrarão o Conhecimento Aéreo-AWB; • O(s) volume(s) está(ão) acondicionado(s) in embalagem(ns) adequada(s) para garantir a sua preservação durante o transporte até sua entrega ao destinatário; • Quaisquer irregularidades identificadas no(s) volume(s) serão imediatamente comunicadas à Azul Linhas Aéreas Brasileiras S.A.<br>
-                    <strong>Afirmo que o(s) volume(s) apresentado(s) NÃO CONTÉM nenhum dos itens abaixo pois estou ciente de que são PROIBIDOS PARA TRANSPORTE PELA AZUL:</strong> • Artigo Perigoso à segurança do transporte aéreo (conforme classificação da ONU); • Documento de Licitação; • Documentos pessoais: RG, CPF, carteira de trabalho, carteira de motorista, passaporte, certidões, documentos de veículos, bem como, placas; • Cheques, vale refeição e de transporte, cartões bancários.
-                </div>
-
-                <div style="font-family: Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #1a1a1a;">
-                    
-                    <div style="margin-bottom: 35px;">
-                        Local: <strong style="font-size: 11px;">Fortaleza – CE</strong> &nbsp;&nbsp; Data: <strong style="font-size: 11px;">${dataHoje}</strong> , _____________________________________,__________________________
-                        <div style="margin-top: 2px; padding-left: 290px; font-size: 10px; color: #475569; display: inline-block; width: 180px; text-align: center;">
-                        Nome
-                        </div>
-                        
-                        <div style="margin-top: 2px; padding-left: 200px; font-size: 10px; color: #475569; display: inline-block; width: 180px; text-align: center;">
-                        CPF
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style="text-align: center; font-weight: bold; margin-bottom: 12px; font-size: 11px;">
-                            Uso da Azul Cargo
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="text-align: left; line-height: 2;">
-                                Recebido pela Azul Cargo em: ______/______/______ <br>
-                                Assinatura: __________________________________________
-                            </div>
-                            
-                            <div style="text-align: right; font-weight: bold; padding-top: 22px;">
-                                Conhecimento nº _______________________ &nbsp;&nbsp;&nbsp;&nbsp; Loja: _________
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            `;
-
-            const opcoes = {
-                margin: 0,
-                filename: `Minuta_${minutaGeradaCodigo}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        async function enviarDadosParaPainel() {
+            const payload = {
+                minuta: minutaGeradaCodigo,
+                data: new Date().toLocaleDateString('pt-BR'),
+                remetente: {
+                    nome: document.getElementById('rem-nome').value.toUpperCase(),
+                    documento: document.getElementById('rem-documento').value,
+                    ie: document.getElementById('rem-ie').value,
+                    cep: document.getElementById('rem-cep').value,
+                    rua: document.getElementById('rem-rua').value.toUpperCase(),
+                    numero: document.getElementById('rem-numero').value,
+                    bairro: document.getElementById('rem-bairro').value.toUpperCase(),
+                    cidade: document.getElementById('rem-cidade').value.toUpperCase(),
+                    estado: document.getElementById('rem-estado').value.toUpperCase(),
+                    fone: document.getElementById('rem-fone').value
+                },
+                destinatario: {
+                    nome: document.getElementById('dest-nome').value.toUpperCase(),
+                    documento: document.getElementById('dest-documento').value,
+                    ie: document.getElementById('dest-ie').value,
+                    cep: document.getElementById('dest-cep').value,
+                    rua: document.getElementById('dest-rua').value.toUpperCase(),
+                    numero: document.getElementById('dest-numero').value,
+                    complemento: document.getElementById('dest-complemento').value.toUpperCase(),
+                    bairro: document.getElementById('dest-bairro').value.toUpperCase(),
+                    cidade: document.getElementById('dest-cidade').value.toUpperCase(),
+                    estado: document.getElementById('dest-estado').value.toUpperCase(),
+                    fone: document.getElementById('dest-fone').value
+                },
+                entrega: {
+                    modalidade: modalidadeEntrega,
+                    unidade: unidadeSelecionada,
+                    sigla: unitySigla
+                },
+                tomador: {
+                    tipo: tomadorSelecionado,
+                    nome: tomadorSelecionado === 'Outro' ? document.getElementById('tom-nome').value.toUpperCase() : '',
+                    documento: tomadorSelecionado === 'Outro' ? document.getElementById('tom-documento').value : ''
+                },
+                observacao: document.getElementById('campo-observacao').value.toUpperCase()
             };
 
-            html2pdf().set(opcoes).from(elementoEscondido).save();
+            console.log("Migrando dados para o Firebase:", payload);
+
+            try {
+                const response = await fetch(urlPainelLoja, {
+                    method: "POST", // Envia via REST API do Firebase[cite: 1]
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    console.log("Dados salvos com sucesso no nó /minutas!");
+                } else {
+                    console.error("Erro retornado pelo Firebase:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Erro de conexão com o Firebase:", error);
+            }
         }
+
+        function gerarEBaixarPDF() {
+    // 1. Coleta dados do Remetente
+    const remNome = document.getElementById('rem-nome').value.toUpperCase();
+    const remDoc = document.getElementById('rem-documento').value;
+    const remRua = document.getElementById('rem-rua').value.toUpperCase();
+    const remNum = document.getElementById('rem-numero').value;
+    const remBairro = document.getElementById('rem-bairro').value.toUpperCase();
+    const remCidade = document.getElementById('rem-cidade').value.toUpperCase();
+    const remUf = document.getElementById('rem-estado').value.toUpperCase();
+    const remCep = document.getElementById('rem-cep').value;
+    const remFone = document.getElementById('rem-fone').value;
+
+    // 2. Coleta dados do Destinatário
+    const destNome = document.getElementById('dest-nome').value.toUpperCase();
+    const destDoc = document.getElementById('dest-documento').value;
+    const destRua = document.getElementById('dest-rua').value.toUpperCase();
+    const destNum = document.getElementById('dest-numero').value;
+    const destBairro = document.getElementById('dest-bairro').value.toUpperCase();
+    const destComp = document.getElementById('dest-complemento').value.toUpperCase();
+    const destCidade = document.getElementById('dest-cidade').value.toUpperCase();
+    const destUf = document.getElementById('dest-estado').value.toUpperCase();
+    const destCep = document.getElementById('dest-cep').value;
+    const destFone = document.getElementById('dest-fone').value;
+
+    // 3. CORREÇÃO: Criação das strings de endereço que estavam faltando
+    const endRem = `${remRua}, ${remNum} - ${remBairro}`;
+    const endDes = `${destRua}, ${destNum} - ${destBairro}`;
+
+    // 4. Define dados do Tomador
+    let tomNome = "", tomDoc = "";
+    if (tomadorSelecionado === 'Outro') {
+        tomNome = document.getElementById('tom-nome').value.toUpperCase();
+        tomDoc = document.getElementById('tom-documento').value;
+    } else {
+        tomNome = tomadorSelecionado === 'Remetente' ? remNome : destNome;
+        tomDoc = tomadorSelecionado === 'Remetente' ? remDoc : destDoc;
+    }
+
+    const obsTexto = document.getElementById('campo-observacao').value.toUpperCase();
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    let txtRetirada = modalidadeEntrega === 'aeroporto' ? unidadeSelecionada.toUpperCase() : "ENTREGA EM DOMICÍLIO";
+
+    // 5. Criação do elemento temporário para o PDF
+    const elementoEscondido = document.createElement('div');
+    elementoEscondido.style.padding = '35px';
+    elementoEscondido.style.backgroundColor = '#ffffff';
+    elementoEscondido.style.fontSize = '11px';
+    elementoEscondido.style.fontFamily = 'Arial, sans-serif';
+
+    elementoEscondido.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #002d72; padding-bottom: 10px; margin-bottom: 15px;">
+            <div>
+                <div style="color: #002d72; font-size: 26px; font-weight: 900; font-style: italic; line-height: 1;">Azulcargo</div>
+                <div style="color: #009ee3; font-size: 13px; font-weight: bold; font-style: italic; text-transform: uppercase; padding-left: 30px;">Express</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: #002d72; font-weight: bold; font-size: 15px;">MINUTA DE DESPACHO DE CARGA</div>
+                <div style="font-size: 12px; font-weight: bold; margin-top: 3px; color: #555;">Nº: ${minutaGeradaCodigo}</div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px; font-size: 11px; line-height: 1.8; background: #f8fafc; padding: 12px; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <strong style="margin-right: 10px;">Serviço:</strong> 
+            <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Premium &nbsp;&nbsp;&nbsp;&nbsp; 
+            <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Expresso &nbsp;&nbsp;&nbsp;&nbsp; 
+            <span style="font-size: 25px; font-weight: bold; letter-spacing: 2px;">□</span> Standard <br>
+            <strong>Pagamento do frete:</strong> ${tomadorSelecionado.toUpperCase()} <br>
+            <strong>Modalidade:</strong> ${txtRetirada}
+        </div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+            <div style="flex: 1; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Remetente</div>
+                <strong>Nome:</strong> ${remNome}<br>
+                <strong>CNPJ/CPF:</strong> ${remDoc}<br>
+                <strong>Endereço:</strong> ${endRem}<br>
+                <strong>Município:</strong> ${remCidade} - ${remUf} &nbsp;&nbsp; <strong>CEP:</strong> ${remCep}<br>
+                <strong>Fone:</strong> ${remFone}
+            </div>
+            <div style="flex: 1; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px;">
+                <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Destinatário</div>
+                <strong>Nome:</strong> ${destNome}<br>
+                <strong>CNPJ/CPF:</strong> ${destDoc}<br>
+                <strong>Endereço:</strong> ${endDes}<br>
+                <strong>Complemento:</strong> ${destComp || 'NADA CONSTA'}<br>
+                <strong>Município:</strong> ${destCidade} - ${destUf} &nbsp;&nbsp; <strong>CEP:</strong> ${destCep}<br>
+                <strong>Fone:</strong> ${destFone}
+            </div>
+        </div>
+
+        <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Tomador do Serviço</div>
+            <strong>Nome:</strong> ${tomNome} &nbsp;&nbsp;&nbsp;&nbsp; <strong>CNPJ/CPF:</strong> ${tomDoc}
+        </div>
+
+        <div style="border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            <div style="color: #002d72; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px;">Observação</div>
+            <div style="font-size: 11px; min-height: 30px;">${obsTexto || 'SEM OBSERVACOES'}</div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; text-align: left;">
+            <thead>
+                <tr style="background-color: #002d72; color: white; font-size: 10px; text-transform: uppercase;">
+                    <th style="border: 1px solid #cbd5e1; padding: 6px;">Qtde. Vols.</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 6px;">Peso (kg)</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 6px;">Dimensões</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 6px;">Descrição do Conteúdo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
+                    <td style="border: 1px solid #cbd5e1; padding: 15px;"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="font-size: 8.5px; color: #475569; line-height: 1.4; text-align: justify; border: 1px solid #e2e8f0; padding: 10px; border-radius: 4px; margin-bottom: 25px; background: #f8fafc;">
+            Autorizo a emissão do conhecimento aéreo e o transporte do(os) volume(s) conforme especificações neste documento, responsabilizando-me por eventuais atrasos ou prejuízos decorrentes de informações incorretas ou incompletas nesta minuta. Declaro que: • O(s) volume(s) foi(foram) submetido(s) a controles de segurança apropriados até o momento da entrega à Azul Linhas Aéreas Brasileiras S.A.; O(s) volume(s) foi(foram) manuseado(s) por pessoas devidamente autorizadas e treinadas para identificar artigos proibidos e/ou perigosos para o transporte aéreo, e nenhum deles apresenta histórico criminal junto às autoridades policiais; • O(s) volume(s) foi(ram) devidamente conferido(s) e inspecionado(s) e está(ão) de acordo com a descrição contida no documento fiscal correspondente, cujas informações integrarão o Conhecimento Aéreo-AWB; • O(s) volume(s) está(ão) acondicionado(s) in embalagem(ns) adequada(s) para garantir a sua preservação durante o transporte até sua entrega ao destinatário; • Quaisquer irregularidades identificadas no(s) volume(s) serão imediatamente comunicadas à Azul Linhas Aéreas Brasileiras S.A.<br>
+            <strong>Afirmo que o(s) volume(s) apresentado(s) NÃO CONTÉM nenhum dos itens abaixo pois estou ciente de que são PROIBIDOS PARA TRANSPORTE PELA AZUL:</strong> • Artigo Perigoso à segurança do transporte aéreo (conforme classificação da ONU); • Documento de Licitação; • Documentos pessoais: RG, CPF, carteira de trabalho, carteira de motorista, passaporte, certidões, documentos de veículos, bem como, placas; • Cheques, vale refeição e de transporte, cartões bancários.
+        </div>
+
+        <div style="font-family: Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #1a1a1a;">
+            
+            <div style="margin-bottom: 35px;">
+                Local: <strong style="font-size: 11px;">Fortaleza – CE</strong> &nbsp;&nbsp; Data: <strong style="font-size: 11px;">${dataHoje}</strong> , _____________________________________,__________________________
+                <div style="margin-top: 2px; padding-left: 290px; font-size: 10px; color: #475569; display: inline-block; width: 180px; text-align: center;">
+                Nome
+                </div>
+                
+                <div style="margin-top: 2px; padding-left: 200px; font-size: 10px; color: #475569; display: inline-block; width: 180px; text-align: center;">
+                CPF
+                </div>
+            </div>
+
+            <div>
+                <div style="text-align: center; font-weight: bold; margin-bottom: 12px; font-size: 11px;">
+                    Uso da Azul Cargo
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="text-align: left; line-height: 2;">
+                        Recebido pela Azul Cargo em: ______/______/______ <br>
+                        Assinatura: __________________________________________
+                    </div>
+                    
+                    <div style="text-align: right; font-weight: bold; padding-top: 22px;">
+                        Conhecimento nº _______________________ &nbsp;&nbsp;&nbsp;&nbsp; Loja: _________
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const opcoes = {
+        margin: 0,
+        filename: `Minuta_${minutaGeradaCodigo}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opcoes).from(elementoEscondido).save();
+}
 
         function reiniciarFluxo() { location.reload(); }
         document.addEventListener('DOMContentLoaded', carregarDadosDoGitHub);
